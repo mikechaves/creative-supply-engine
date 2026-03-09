@@ -23,6 +23,16 @@ This project demonstrates a reuse-first creative automation pipeline for social 
 - OpenAI image generation is isolated behind an image generator interface so the pipeline can swap providers later without changing the orchestration code
 - the live provider uses the OpenAI Images API with a single prompt-based generation call sized for downstream social crops
 
+## 60-Second Walkthrough
+
+If you need to explain the project quickly in an interview, the clean walkthrough is:
+
+1. `brief_loader.py` loads the YAML brief and validates the required campaign fields and product list.
+2. `main.py` checks each product for a reusable local hero asset in `assets/` before doing any generation.
+3. If a hero is missing, `image_generator.py` calls OpenAI behind a small provider interface; if that fails, the pipeline uses a runtime-only placeholder and keeps going.
+4. `creative_builder.py` creates the `1:1`, `9:16`, and `16:9` variants, and `overlay.py` adds the campaign message with a fixed bottom-banner treatment.
+5. The run writes final images into `outputs/` and records provenance, warnings, and output paths in `run_log.json`.
+
 ## Setup
 
 1. Create and activate a virtual environment.
@@ -58,6 +68,18 @@ Use the sample brief:
 python -m src.main
 ```
 
+Use the deterministic fallback demo path:
+
+```bash
+make demo
+```
+
+Use the live provider path when `OPENAI_API_KEY` is configured:
+
+```bash
+make demo-live
+```
+
 Use a custom brief:
 
 ```bash
@@ -68,6 +90,12 @@ Run tests:
 
 ```bash
 python -m unittest discover -s tests
+```
+
+Or use:
+
+```bash
+make test
 ```
 
 ## Sample Input And Output Structure

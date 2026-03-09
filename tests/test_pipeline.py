@@ -229,6 +229,30 @@ class CreativeSupplyEngineTests(unittest.TestCase):
             ["https://api.openai.com/v1/images/generations"],
         )
 
+    def test_openai_generator_downloads_url_image_response(self) -> None:
+        generator = StubOpenAIImageGenerator(
+            responses=[
+                {
+                    "created": 1234567890,
+                    "data": [{"url": "https://example.com/generated-hero.png"}],
+                }
+            ]
+        )
+
+        with patch.dict("os.environ", {"OPENAI_API_KEY": "test-key"}, clear=True):
+            result = generator.generate("A polished product hero shot", (1024, 1024))
+
+        self.assertEqual(result.provenance, "generated_openai")
+        self.assertIsNone(result.warning)
+        self.assertEqual(result.image.size, (1024, 1024))
+        self.assertEqual(
+            generator.requests,
+            [
+                "https://api.openai.com/v1/images/generations",
+                "https://example.com/generated-hero.png",
+            ],
+        )
+
     def test_main_reports_malformed_yaml_as_brief_validation_error(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             brief_path = Path(temp_dir) / "campaign.yaml"
