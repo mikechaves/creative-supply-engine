@@ -317,7 +317,7 @@ class CreativeSupplyEngineTests(unittest.TestCase):
                     "campaign_name: Summer Citrus Reset",
                     "region: North America",
                     "target_audience: Busy professionals looking for clean-label convenience snacks",
-                    "campaign_message: Reset your routine with bright flavor and steady energy.",
+                    "campaign_message: Bright Start. Steady Energy.",
                     "products:",
                     "  - name: citrus-sparkling-water",
                     "  - name: oat-energy-bar",

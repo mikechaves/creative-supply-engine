@@ -86,6 +86,10 @@ Use the live provider path when `OPENAI_API_KEY` is configured:
 make demo-live
 ```
 
+If you previously generated a reusable hero for `oat-energy-bar`, delete
+`assets/oat-energy-bar/hero.png` before rerunning `make demo-live` so the sample
+demo shows the missing-asset generation path again.
+
 Use a custom brief:
 
 ```bash
@@ -133,6 +137,7 @@ The sample brief includes two products:
 
 - `citrus-sparkling-water` reuses a committed local hero asset
 - `oat-energy-bar` starts without a hero asset so the pipeline exercises OpenAI generation or placeholder fallback
+- both sample products include tighter `prompt_override` copy aimed at cleaner, more photorealistic advertising compositions with safe crop margins and no readable packaging text
 
 ## Reusable Assets vs Runtime Outputs
 

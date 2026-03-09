@@ -1,11 +1,23 @@
 campaign_name: Summer Citrus Reset
 region: North America
 target_audience: Busy professionals looking for clean-label convenience snacks
-campaign_message: Reset your routine with bright flavor and steady energy.
+campaign_message: Bright Start. Steady Energy.
 products:
   - name: citrus-sparkling-water
+    prompt_override: >
+      Create an ultra-premium consumer packaged goods hero image of a chilled can
+      of citrus sparkling water on a bright lemon-lime studio set. Photorealistic
+      beverage advertising, crisp condensation droplets, fresh citrus slices and
+      peel accents, polished highlights, soft depth of field, clean sunlit
+      atmosphere, centered single product with generous negative space and safe
+      margins for square, vertical, and horizontal social crops. No readable
+      text, no logos, no watermark, no extra cans, no collage.
   - name: oat-energy-bar
     prompt_override: >
-      Create a premium studio hero image of a wrapped oat energy bar on a warm,
-      natural backdrop with subtle grain texture, crisp highlights, and a clean
-      wellness-advertising look.
+      Create a premium food photography hero image of a wrapped oat energy bar
+      on a warm natural studio surface with scattered oats, almonds, and wheat
+      accents. Photorealistic wellness-advertising look, crisp highlights, soft
+      morning light, clean modern composition, centered single product with
+      generous negative space and safe margins for square, vertical, and
+      horizontal social crops. Packaging should be clean and minimal with no
+      readable text or logos, no hands, no watermark, no extra products.
