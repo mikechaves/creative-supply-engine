@@ -58,9 +58,12 @@ class OpenAIImageGenerator(ImageGenerator):
         prompt: str,
         size: tuple[int, int],
     ) -> Image.Image:
+        model_name = os.getenv(
+            self.config.openai_image_model_env, self.config.openai_image_model
+        )
         payload = json.dumps(
             {
-                "model": self.config.openai_image_model,
+                "model": model_name,
                 "prompt": prompt,
                 "n": 1,
                 "size": f"{size[0]}x{size[1]}",

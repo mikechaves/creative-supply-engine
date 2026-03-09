@@ -38,9 +38,12 @@ class StubOpenAIImageGenerator(OpenAIImageGenerator):
         super().__init__(default_config(Path("/tmp")))
         self.responses = list(responses)
         self.requests: list[str] = []
+        self.payloads: list[dict] = []
 
     def _open_json(self, request):  # type: ignore[override]
         self.requests.append(request.full_url)
+        if request.data:
+            self.payloads.append(json.loads(request.data.decode("utf-8")))
         if not self.responses:
             raise AssertionError("No stub response available for request.")
         return self.responses.pop(0)
@@ -252,6 +255,37 @@ class CreativeSupplyEngineTests(unittest.TestCase):
                 "https://example.com/generated-hero.png",
             ],
         )
+
+    def test_openai_generator_honors_model_env_override(self) -> None:
+        generator = StubOpenAIImageGenerator(
+            responses=[
+                {
+                    "created": 1234567890,
+                    "data": [{"url": "https://example.com/generated-hero.png"}],
+                }
+            ]
+        )
+
+        with patch.dict(
+            "os.environ",
+            {
+                "OPENAI_API_KEY": "test-key",
+                "OPENAI_IMAGE_MODEL": "gpt-image-1-mini",
+            },
+            clear=True,
+        ):
+            result = generator.generate("A polished product hero shot", (1024, 1024))
+
+        self.assertEqual(result.provenance, "generated_openai")
+        self.assertEqual(result.image.size, (1024, 1024))
+        self.assertEqual(
+            generator.requests,
+            [
+                "https://api.openai.com/v1/images/generations",
+                "https://example.com/generated-hero.png",
+            ],
+        )
+        self.assertEqual(generator.payloads[0]["model"], "gpt-image-1-mini")
 
     def test_main_reports_malformed_yaml_as_brief_validation_error(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:

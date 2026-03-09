@@ -12,6 +12,7 @@ RATIO_SPECS = {
 SUPPORTED_HERO_EXTENSIONS = (".png", ".jpg", ".jpeg", ".webp")
 DEFAULT_GENERATION_SIZE = (1024, 1024)
 PROHIBITED_WORDS = ("banned", "illegal", "guaranteed cure")
+DEFAULT_OPENAI_IMAGE_MODEL = "gpt-image-1.5"
 
 
 @dataclass(frozen=True)
@@ -25,8 +26,9 @@ class AppConfig:
     supported_hero_extensions: tuple[str, ...] = SUPPORTED_HERO_EXTENSIONS
     default_generation_size: tuple[int, int] = DEFAULT_GENERATION_SIZE
     openai_api_key_env: str = "OPENAI_API_KEY"
+    openai_image_model_env: str = "OPENAI_IMAGE_MODEL"
     openai_generate_url: str = "https://api.openai.com/v1/images/generations"
-    openai_image_model: str = "gpt-image-1.5"
+    openai_image_model: str = DEFAULT_OPENAI_IMAGE_MODEL
     openai_timeout_seconds: int = 60
 
 

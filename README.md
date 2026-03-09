@@ -58,7 +58,13 @@ Required for live OpenAI image generation:
 
 - `OPENAI_API_KEY`
 
-If this variable is missing, or the OpenAI request fails, the pipeline continues with a generated placeholder image for that run.
+Optional:
+
+- `OPENAI_IMAGE_MODEL` to override the default image model
+  - default: `gpt-image-1.5`
+  - lower-cost alternative: `gpt-image-1-mini`
+
+If `OPENAI_API_KEY` is missing, or the OpenAI request fails, the pipeline continues with a generated placeholder image for that run.
 
 ## How To Run
 
@@ -143,6 +149,7 @@ This keeps the reusable asset library clean and prevents placeholder images from
 
 - **Local-first storage:** The assignment is a local proof of concept, so the code uses direct filesystem paths instead of a storage abstraction.
 - **Thin OpenAI wrapper:** OpenAI integration is isolated in `image_generator.py`, while the rest of the pipeline only cares about image provenance and the returned Pillow image.
+- **Explicit model selection:** The generator defaults to `gpt-image-1.5`, but `OPENAI_IMAGE_MODEL` can override it without changing code.
 - **Pragmatic provider choice:** OpenAI was used for this local proof of concept because it is dependable to wire into a local CLI with a single API key. In a production Adobe-aligned environment, Firefly would be the natural provider to revisit.
 - **Deterministic image treatment:** Resize/crop is always center-based, and text overlay always uses a bottom banner with wrapped text.
 - **Readable orchestration:** `src/main.py` performs the pipeline step by step so it is easy to explain in a short interview walkthrough.
