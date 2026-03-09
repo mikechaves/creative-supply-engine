@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import base64
+from contextlib import redirect_stderr
 import io
 import json
 import tempfile
@@ -13,7 +14,7 @@ from PIL import Image
 from src.brief_loader import BriefValidationError, load_brief
 from src.config import default_config
 from src.image_generator import GeneratedImageResult, ImageGenerator, OpenAIImageGenerator
-from src.main import run_pipeline
+from src.main import main, run_pipeline
 
 
 class FakeGenerator(ImageGenerator):
@@ -57,6 +58,13 @@ class CreativeSupplyEngineTests(unittest.TestCase):
                 "campaign_name: Demo\nregion: US\ntarget_audience: Everyone\nproducts: []\n",
                 encoding="utf-8",
             )
+            with self.assertRaises(BriefValidationError):
+                load_brief(brief_path)
+
+    def test_load_brief_raises_for_malformed_yaml(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            brief_path = Path(temp_dir) / "campaign.yaml"
+            brief_path.write_text("campaign_name: [oops\n", encoding="utf-8")
             with self.assertRaises(BriefValidationError):
                 load_brief(brief_path)
 
@@ -126,6 +134,41 @@ class CreativeSupplyEngineTests(unittest.TestCase):
             )
             self.assertTrue(run_log["warnings"])
 
+    def test_pipeline_regenerates_when_local_asset_is_unreadable(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            project_root = Path(temp_dir)
+            self._create_project_structure(project_root)
+            self._write_brief(project_root)
+            corrupted_path = (
+                project_root / "assets" / "citrus-sparkling-water" / "hero.png"
+            )
+            corrupted_path.write_bytes(b"not-an-image")
+            generator = FakeGenerator(provenance="generated_openai")
+
+            run_log, _ = run_pipeline(
+                brief_path=project_root / "briefs" / "campaign.yaml",
+                config=default_config(project_root),
+                generator=generator,
+            )
+
+            self.assertEqual(len(generator.calls), 2)
+            citrus_entry = run_log["products"][0]
+            self.assertEqual(citrus_entry["asset_provenance"], "generated_openai")
+            self.assertEqual(
+                citrus_entry["saved_hero_path"],
+                "assets/citrus-sparkling-water/hero.png",
+            )
+            self.assertIsNone(citrus_entry["hero_source_path"])
+            self.assertTrue(
+                any(
+                    "Local hero asset could not be opened and was ignored"
+                    in warning
+                    for warning in citrus_entry["warnings"]
+                )
+            )
+            with Image.open(project_root / "assets" / "citrus-sparkling-water" / "hero.png") as image:
+                self.assertEqual(image.size, (1024, 1024))
+
     def test_run_log_contains_concise_expected_fields(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             project_root = Path(temp_dir)
@@ -185,6 +228,18 @@ class CreativeSupplyEngineTests(unittest.TestCase):
             generator.requests,
             ["https://api.openai.com/v1/images/generations"],
         )
+
+    def test_main_reports_malformed_yaml_as_brief_validation_error(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            brief_path = Path(temp_dir) / "campaign.yaml"
+            brief_path.write_text("campaign_name: [oops\n", encoding="utf-8")
+            stderr = io.StringIO()
+
+            with redirect_stderr(stderr):
+                exit_code = main(["--brief", str(brief_path)])
+
+            self.assertEqual(exit_code, 1)
+            self.assertIn("Brief validation failed:", stderr.getvalue())
 
     def _create_project_structure(self, project_root: Path) -> None:
         for relative_dir in (

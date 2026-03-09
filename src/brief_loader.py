@@ -29,8 +29,13 @@ def load_brief(path: Path) -> CampaignBrief:
     if not path.exists():
         raise BriefValidationError(f"Brief file not found: {path}")
 
-    with path.open("r", encoding="utf-8") as handle:
-        raw_data = yaml.safe_load(handle) or {}
+    try:
+        with path.open("r", encoding="utf-8") as handle:
+            raw_data = yaml.safe_load(handle) or {}
+    except OSError as exc:
+        raise BriefValidationError(f"Could not read brief file: {path}") from exc
+    except yaml.YAMLError as exc:
+        raise BriefValidationError(f"Brief YAML is invalid: {exc}") from exc
 
     if not isinstance(raw_data, dict):
         raise BriefValidationError("Brief YAML must contain a top-level mapping.")

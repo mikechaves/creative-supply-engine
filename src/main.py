@@ -5,7 +5,7 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-from PIL import Image
+from PIL import Image, UnidentifiedImageError
 
 from src.asset_manager import (
     find_reusable_hero,
@@ -58,18 +58,38 @@ def run_pipeline(
         hero_path = find_reusable_hero(config, product.name)
         product_warnings: list[str] = []
         saved_hero_path: Path | None = None
+        used_hero_path: Path | None = None
 
         if hero_path:
-            base_image = Image.open(hero_path).convert("RGBA")
-            provenance = "reused_local"
-        else:
+            try:
+                with Image.open(hero_path) as existing_image:
+                    base_image = existing_image.convert("RGBA")
+                provenance = "reused_local"
+                used_hero_path = hero_path
+            except (OSError, UnidentifiedImageError) as exc:
+                _append_warning(
+                    run_log=run_log,
+                    product_name=product.name,
+                    product_warnings=product_warnings,
+                    message=(
+                        "Local hero asset could not be opened and was ignored: "
+                        f"{to_relative_string(hero_path, config.project_root)}. "
+                        f"Reason: {exc}"
+                    ),
+                )
+                hero_path = None
+
+        if hero_path is None:
             generated = generator.generate(prompt, config.default_generation_size)
             base_image = generated.image.convert("RGBA")
             provenance = generated.provenance
             if generated.warning:
-                warning = f"{product.name}: {generated.warning}"
-                product_warnings.append(generated.warning)
-                run_log["warnings"].append(warning)
+                _append_warning(
+                    run_log=run_log,
+                    product_name=product.name,
+                    product_warnings=product_warnings,
+                    message=generated.warning,
+                )
             if provenance == "generated_openai":
                 saved_hero_path = save_generated_hero_asset(
                     config, product.name, base_image
@@ -92,7 +112,7 @@ def run_pipeline(
                 "name": product.name,
                 "slug": slugify(product.name),
                 "asset_provenance": provenance,
-                "hero_source_path": to_relative_string(hero_path, config.project_root),
+                "hero_source_path": to_relative_string(used_hero_path, config.project_root),
                 "saved_hero_path": to_relative_string(saved_hero_path, config.project_root),
                 "warnings": product_warnings,
                 "outputs": output_paths,
@@ -101,6 +121,16 @@ def run_pipeline(
 
     log_path = write_run_log(campaign_output_dir, run_log)
     return run_log, log_path
+
+
+def _append_warning(
+    run_log: dict,
+    product_name: str,
+    product_warnings: list[str],
+    message: str,
+) -> None:
+    product_warnings.append(message)
+    run_log["warnings"].append(f"{product_name}: {message}")
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
