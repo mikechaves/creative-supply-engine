@@ -22,6 +22,15 @@ from src.brief_loader import (
     build_generation_prompt,
     load_brief,
 )
+from src.cli_ui import (
+    APP_VERSION_TAG,
+    print_pulse_header,
+    render_divider,
+    render_error,
+    render_section,
+    render_success,
+    render_warning,
+)
 from src.compliance import evaluate_compliance
 from src.config import AppConfig, default_config
 from src.creative_builder import build_creatives
@@ -210,12 +219,24 @@ def _resolve_project_path(project_root: Path, raw_path: Path | None) -> Path | N
     if raw_path.is_absolute():
         return raw_path
     return (project_root / raw_path).resolve()
+
+
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Creative Supply Engine CLI")
+    parser = argparse.ArgumentParser(description="PULSE Creative Supply Engine CLI")
     parser.add_argument(
         "--brief",
         default="briefs/campaign.yaml",
         help="Path to the campaign YAML brief.",
+    )
+    parser.add_argument(
+        "--no-color",
+        action="store_true",
+        help="Disable ANSI color output.",
+    )
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=f"PULSE Creative Supply Engine {APP_VERSION_TAG}",
     )
     return parser.parse_args(argv)
 
@@ -223,24 +244,75 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 def main(argv: list[str] | None = None) -> int:
     load_dotenv()
     args = parse_args(argv)
+    real_cli_run = argv is None
+    stdout_no_color = args.no_color or not sys.stdout.isatty()
+    stderr_no_color = args.no_color or not sys.stderr.isatty()
     config = default_config()
     brief_path = Path(args.brief).expanduser()
     if not brief_path.is_absolute():
         brief_path = (config.project_root / brief_path).resolve()
+    relative_brief_path = to_relative_string(brief_path, config.project_root) or str(
+        brief_path
+    )
+
+    if real_cli_run:
+        print_pulse_header(version_tag=APP_VERSION_TAG, no_color=stdout_no_color)
+        print()
+        print(render_section("Brief Loaded", no_color=stdout_no_color))
+        print(f"Brief: {relative_brief_path}")
+        print(render_divider(no_color=stdout_no_color))
+        print(render_section("Creative Builds", no_color=stdout_no_color))
 
     try:
         run_log, log_path = run_pipeline(brief_path=brief_path, config=config)
     except BriefValidationError as exc:
-        print(f"Brief validation failed: {exc}", file=sys.stderr)
+        if real_cli_run:
+            print(file=sys.stderr)
+            print(render_divider(no_color=stderr_no_color), file=sys.stderr)
+            print(render_section("Run Summary", no_color=stderr_no_color), file=sys.stderr)
+            print(
+                render_error(f"Brief validation failed: {exc}", no_color=stderr_no_color),
+                file=sys.stderr,
+            )
+        else:
+            print(f"Brief validation failed: {exc}", file=sys.stderr)
         return 1
     except Exception as exc:  # noqa: BLE001 - CLI safety net
-        print(f"Pipeline failed: {exc}", file=sys.stderr)
+        if real_cli_run:
+            print(file=sys.stderr)
+            print(render_divider(no_color=stderr_no_color), file=sys.stderr)
+            print(render_section("Run Summary", no_color=stderr_no_color), file=sys.stderr)
+            print(
+                render_error(f"Pipeline failed: {exc}", no_color=stderr_no_color),
+                file=sys.stderr,
+            )
+        else:
+            print(f"Pipeline failed: {exc}", file=sys.stderr)
         return 1
 
-    print(
-        f"Processed {len(run_log['localized_outputs'])} localized creative set(s). "
-        f"Run log: {to_relative_string(log_path, config.project_root)}"
-    )
+    if real_cli_run:
+        print()
+        print(render_divider(no_color=stdout_no_color))
+        print(render_section("Run Summary", no_color=stdout_no_color))
+        print(
+            render_success(
+                f"Processed {len(run_log['localized_outputs'])} localized creative set(s).",
+                no_color=stdout_no_color,
+            )
+        )
+        print(f"Run log: {to_relative_string(log_path, config.project_root)}")
+        if run_log["warnings"]:
+            print(
+                render_warning(
+                    f"{len(run_log['warnings'])} warning(s) recorded.",
+                    no_color=stdout_no_color,
+                )
+            )
+    else:
+        print(
+            f"Processed {len(run_log['localized_outputs'])} localized creative set(s). "
+            f"Run log: {to_relative_string(log_path, config.project_root)}"
+        )
     return 0
 
 

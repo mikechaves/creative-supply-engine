@@ -100,6 +100,18 @@ Run the sample brief:
 python -m src.main
 ```
 
+Show the version and exit:
+
+```bash
+python -m src.main --version
+```
+
+Disable ANSI color output:
+
+```bash
+python -m src.main --no-color
+```
+
 Run the deterministic fallback path:
 
 ```bash
@@ -125,6 +137,36 @@ Or use:
 
 ```bash
 make test
+```
+
+## CLI Branding
+
+The PULSE-branded terminal presentation is cosmetic only. It improves readability
+for real CLI runs, but does not affect pipeline correctness, orchestration, or
+provider behavior.
+
+- real CLI runs show a compact PULSE header and restrained status sections
+- `--version` prints the current CLI version and exits
+- `--no-color` renders the same output without ANSI styling
+- programmatic test calls remain quiet because the header is only printed during
+  real CLI entrypoint runs
+
+Monochrome example:
+
+```text
+ ____  _   _ _     ____  _____   PULSE
+|  _ \| | | | |   / ___|| ____|
+| |_) | | | | |   \___ \|  _|
+|  __/| |_| | |___ ___) | |___
+|_|    \___/|_____|____/|_____|
+Creative Supply Engine · PULSE Beverages            v0.3.0
+```
+
+Explicit ANSI example:
+
+```text
+\x1b[1m\x1b[38;2;244;197;66m ____  _   _ _     ____  _____   PULSE\x1b[0m
+\x1b[38;2;247;244;237mCreative Supply Engine · PULSE Beverages\x1b[0m            \x1b[1m\x1b[38;2;244;197;66mv0.3.0\x1b[0m
 ```
 
 ## Sample Input And Output Structure
