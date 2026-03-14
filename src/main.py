@@ -224,11 +224,12 @@ def _resolve_project_path(project_root: Path, raw_path: Path | None) -> Path | N
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
+        prog="pulse-cse",
         description=(
             "Generate localized, brand-aware campaign creatives from a YAML brief."
         ),
         epilog=(
-            "Example: python -m src.main --brief briefs/campaign.yaml --no-color\n"
+            "Example: pulse-cse --brief briefs/campaign.yaml --no-color\n"
             "Flags: --brief selects the input brief, --no-color disables ANSI, "
             "--version prints the CLI version."
         ),

@@ -38,9 +38,12 @@ This version of the pipeline is designed to feel closer to a governed enterprise
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
-pip install -r requirements.txt
+pip install -e .
 cp .env.example .env
 ```
+
+The editable install exposes the `pulse-cse` command for local demos. The
+module entrypoint `python -m src.main` still works as before.
 
 ## Environment Variables
 
@@ -97,19 +100,25 @@ In the sample repo state:
 Run the sample brief:
 
 ```bash
-python -m src.main
+pulse-cse
 ```
 
 Show the version and exit:
 
 ```bash
-python -m src.main --version
+pulse-cse --version
 ```
 
 Disable ANSI color output:
 
 ```bash
-python -m src.main --no-color
+pulse-cse --no-color
+```
+
+Override the brief path:
+
+```bash
+pulse-cse --brief briefs/campaign.yaml
 ```
 
 Run the deterministic fallback path:

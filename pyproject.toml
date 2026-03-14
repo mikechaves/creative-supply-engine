@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pulse-cse"
+version = "0.3.0"
+description = "Creative Supply Engine CLI"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "PyYAML>=6.0",
+  "Pillow>=10.0.0",
+  "python-dotenv>=1.0.0",
+]
+
+[project.scripts]
+pulse-cse = "src.main:main"
+
+[tool.setuptools]
+packages = ["src"]
