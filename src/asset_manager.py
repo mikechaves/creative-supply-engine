@@ -45,11 +45,12 @@ def get_final_output_path(
     config: AppConfig,
     campaign_name: str,
     product_name: str,
+    locale: str,
     ratio_name: str,
 ) -> Path:
     campaign_slug = slugify(campaign_name)
     product_slug = slugify(product_name)
-    output_dir = config.outputs_dir / campaign_slug / product_slug / ratio_name
+    output_dir = config.outputs_dir / campaign_slug / product_slug / locale / ratio_name
     output_dir.mkdir(parents=True, exist_ok=True)
     return output_dir / "final.png"
 

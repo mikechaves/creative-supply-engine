@@ -163,8 +163,8 @@ def create_placeholder_image(size: tuple[int, int], label: str) -> Image.Image:
 
     title_font = _load_font(max(28, width // 22))
     body_font = _load_font(max(18, width // 40))
-    title = "Creative Supply Engine"
-    subtitle = f"{label}\nCurrent run continues with a placeholder hero."
+    title = "Campaign hero unavailable"
+    subtitle = f"{label}\nCurrent run continues with a generated placeholder hero."
 
     title_box = draw.textbbox((0, 0), title, font=title_font)
     subtitle_box = draw.multiline_textbbox((0, 0), subtitle, font=body_font, spacing=10)

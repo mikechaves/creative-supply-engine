@@ -1,23 +1,50 @@
 campaign_name: Summer Citrus Reset
-region: North America
-target_audience: Busy professionals looking for clean-label convenience snacks
-campaign_message: Bright Start. Steady Energy.
+brand:
+  name: Pulse Beverages
+  slug: pulse-beverages
+  logo_path: assets/common/pulse-beverages-logo.png
+  colors:
+    primary: "#13324A"
+    secondary: "#214B67"
+    accent: "#F4C542"
+    text_light: "#F7F4ED"
+  compliance:
+    require_logo: true
+    prohibited_words:
+      - guaranteed cure
+      - miracle
+      - illegal
+markets:
+  - locale: en_US
+    region: United States
+    audience: Busy professionals looking for clean-label convenience
+    campaign_message: Bright Start. Steady Energy.
+    cta: Shop the reset
+    disclaimer: Illustrative campaign sample only.
+  - locale: es_MX
+    region: Mexico
+    audience: Profesionales ocupados que buscan opciones practicas y limpias
+    campaign_message: Sabor brillante. Energia constante.
+    cta: Compra el reset
+    disclaimer: Disponible en tiendas participantes.
 products:
   - name: citrus-sparkling-water
     prompt_override: >
-      Create an ultra-premium consumer packaged goods hero image of a chilled can
-      of citrus sparkling water on a bright lemon-lime studio set. Photorealistic
-      beverage advertising, crisp condensation droplets, fresh citrus slices and
-      peel accents, polished highlights, soft depth of field, clean sunlit
-      atmosphere, centered single product with generous negative space and safe
-      margins for square, vertical, and horizontal social crops. No readable
-      text, no logos, no watermark, no extra cans, no collage.
+      Create a premium Pulse Beverages hero image of a chilled can of citrus
+      sparkling water on a bright lemon-lime studio set. Photorealistic
+      beverage advertising, crisp condensation droplets, citrus slices, soft
+      reflections, and a clean sunlit atmosphere. Use a centered single
+      product with clear negative space in the upper-left and lower-left for
+      deterministic logo and campaign overlay, plus safe crop margins for
+      1:1, 9:16, and 16:9 social formats. Keep packaging blank or abstract
+      with no readable text, no watermarks, no collage, and no extra cans.
   - name: oat-energy-bar
     prompt_override: >
-      Create a premium food photography hero image of a wrapped oat energy bar
-      on a warm natural studio surface with scattered oats, almonds, and wheat
-      accents. Photorealistic wellness-advertising look, crisp highlights, soft
-      morning light, clean modern composition, centered single product with
-      generous negative space and safe margins for square, vertical, and
-      horizontal social crops. Packaging should be clean and minimal with no
-      readable text or logos, no hands, no watermark, no extra products.
+      Create a premium Pulse Beverages hero image of a wrapped oat energy bar
+      on a warm natural studio surface with oats, almonds, and wheat accents.
+      Photorealistic wellness advertising, crisp highlights, soft morning
+      light, and a clean modern composition. Use a centered single product
+      with generous negative space in the upper-left and lower-left for
+      deterministic logo and campaign overlay, plus safe crop margins for
+      1:1, 9:16, and 16:9 social formats. Packaging should stay clean and
+      minimal with no readable text, no watermarks, and no extra products.
