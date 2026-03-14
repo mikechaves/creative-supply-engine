@@ -28,6 +28,7 @@ from src.cli_ui import (
     render_divider,
     render_error,
     render_section,
+    render_status,
     render_success,
     render_warning,
 )
@@ -222,16 +223,26 @@ def _resolve_project_path(project_root: Path, raw_path: Path | None) -> Path | N
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="PULSE Creative Supply Engine CLI")
+    parser = argparse.ArgumentParser(
+        description=(
+            "Generate localized, brand-aware campaign creatives from a YAML brief."
+        ),
+        epilog=(
+            "Example: python -m src.main --brief briefs/campaign.yaml --no-color\n"
+            "Flags: --brief selects the input brief, --no-color disables ANSI, "
+            "--version prints the CLI version."
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
     parser.add_argument(
         "--brief",
         default="briefs/campaign.yaml",
-        help="Path to the campaign YAML brief.",
+        help="Path to the campaign YAML brief to process.",
     )
     parser.add_argument(
         "--no-color",
         action="store_true",
-        help="Disable ANSI color output.",
+        help="Disable ANSI color output for plain terminal rendering.",
     )
     parser.add_argument(
         "--version",
@@ -262,6 +273,13 @@ def main(argv: list[str] | None = None) -> int:
         print(f"Brief: {relative_brief_path}")
         print(render_divider(no_color=stdout_no_color))
         print(render_section("Creative Builds", no_color=stdout_no_color))
+        print(render_status("Processing campaign brief...", no_color=stdout_no_color))
+        print(
+            render_status(
+                "Generating hero assets and building creatives...",
+                no_color=stdout_no_color,
+            )
+        )
 
     try:
         run_log, log_path = run_pipeline(brief_path=brief_path, config=config)

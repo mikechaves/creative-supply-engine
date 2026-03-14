@@ -138,6 +138,13 @@ def render_section(title: str, *, no_color: bool = False) -> str:
     return f"{ANSI_BOLD}{ansi_fg(colors.accent)}{label}{ANSI_RESET}"
 
 
+def render_status(message: str, *, no_color: bool = False) -> str:
+    colors = get_pulse_colors()
+    if no_color:
+        return message
+    return f"{ansi_fg(colors.text_light)}{message}{ANSI_RESET}"
+
+
 def render_success(message: str, *, no_color: bool = False) -> str:
     colors = get_pulse_colors()
     label = f"OK  {message}"
