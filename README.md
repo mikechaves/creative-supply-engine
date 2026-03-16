@@ -10,7 +10,12 @@ Local proof of concept for reuse-first campaign creative generation.
 
 ## Setup
 
+1. Download or clone this repository to your machine.
+2. Open Terminal.
+3. Change into the project folder.
+
 ```bash
+cd /path/to/creative-supply-engine
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -e .
@@ -25,7 +30,7 @@ OPENAI_API_KEY=your_key_here
 
 ## Run
 
-Default sample run:
+From the project folder, run the default sample:
 
 ```bash
 pulse-cse
