@@ -1,37 +1,12 @@
 # Creative Supply Engine
 
-Creative Supply Engine is a local-first Python CLI that turns a structured campaign brief into brand-aware, localized social creatives.
+Local proof of concept for reuse-first campaign creative generation.
 
-The proof of concept stays intentionally small:
+## What You Need
 
-- load a YAML brief with brand, markets, and products
-- reuse local hero assets when available
-- generate missing hero assets through a thin OpenAI image wrapper
-- fall back gracefully when generation fails
-- create `1:1`, `9:16`, and `16:9` outputs
-- apply campaign text and CTA with a deterministic brand-aware overlay
-- composite a transparent PNG logo after generation
-- run lightweight compliance checks and write a concise `run_log.json`
-
-## Project Overview
-
-This version of the pipeline is designed to feel closer to a governed enterprise campaign workflow without adding unnecessary infrastructure or abstraction:
-
-- the CLI remains the only interface
-- local folders remain the system of record for briefs, assets, and outputs
-- hero generation stays provider-isolated in `image_generator.py`
-- brand styling, logo placement, and compliance are deterministic post-generation steps
-- localized market outputs are generated per product, per locale, and per ratio
-
-## 60-Second Walkthrough
-
-1. `brief_loader.py` validates a YAML brief with `brand`, `markets`, and `products`.
-2. `main.py` resolves one reusable or generated hero per product, then loops through every market and ratio.
-3. `creative_builder.py` creates the three aspect ratios from the base hero.
-4. `overlay.py` applies a brand-aware message panel using colors from the brief and adds CTA text when present.
-5. `logo_compositor.py` places the transparent brand logo inside safe margins.
-6. `compliance.py` runs lightweight checks on output existence, dimensions, campaign text, prohibited words, and logo application.
-7. `logger.py` writes a readable `run_log.json` with one entry per product and locale.
+- Python 3.10+
+- a terminal
+- optional: `OPENAI_API_KEY` in `.env` if you want live image generation instead of placeholder fallback
 
 ## Setup
 
@@ -42,221 +17,79 @@ pip install -e .
 cp .env.example .env
 ```
 
-The editable install exposes the `pulse-cse` command for local demos. The
-module entrypoint `python -m src.main` still works as before.
+If you want live generation, add your OpenAI key to `.env`:
 
-## Environment Variables
+```bash
+OPENAI_API_KEY=your_key_here
+```
 
-Required for live image generation:
+## Run
 
-- `OPENAI_API_KEY`
-
-Optional:
-
-- `OPENAI_IMAGE_MODEL`
-  - default: `gpt-image-1.5`
-  - lower-cost alternative: `gpt-image-1-mini`
-
-If `OPENAI_API_KEY` is missing, the pipeline continues with a generated placeholder hero for the current run.
-
-## Sample Brief Schema
-
-The sample brief in [briefs/campaign.yaml](/Users/michaelchaves/GitHub/creative-supply-engine/briefs/campaign.yaml) includes:
-
-- `campaign_name`
-- `brand`
-  - `name`
-  - `slug`
-  - `logo_path`
-  - `colors.primary`
-  - `colors.secondary`
-  - `colors.accent`
-  - `colors.text_light`
-  - `compliance.require_logo`
-  - `compliance.prohibited_words`
-- `markets[]`
-  - `locale`
-  - `region`
-  - `audience`
-  - `campaign_message`
-  - `cta`
-  - optional `disclaimer`
-- `products[]`
-  - `name`
-  - optional `prompt_override`
-
-The fictional sample brand is `Pulse Beverages`, with two products:
-
-- `citrus-sparkling-water`
-- `oat-energy-bar`
-
-In the sample repo state:
-
-- `citrus-sparkling-water` already has a reusable local hero asset
-- `oat-energy-bar` starts without a reusable hero asset so the pipeline exercises generation or placeholder fallback
-
-## How To Run
-
-Run the sample brief:
+Default sample run:
 
 ```bash
 pulse-cse
 ```
 
-Show the version and exit:
-
-```bash
-pulse-cse --version
-```
-
-Disable ANSI color output:
-
-```bash
-pulse-cse --no-color
-```
-
-Override the brief path:
+Other useful commands:
 
 ```bash
 pulse-cse --brief briefs/campaign.yaml
+pulse-cse --no-color
+pulse-cse --version
+pulse-cse --help
 ```
 
-Run the deterministic fallback path:
+The original module entrypoint also still works:
 
 ```bash
-make demo
+python -m src.main
 ```
 
-Run the live provider path when `OPENAI_API_KEY` is configured:
+## Sample Inputs
+
+- brief: [briefs/campaign.yaml](/Users/michaelchaves/GitHub/creative-supply-engine/briefs/campaign.yaml)
+- reusable assets: [assets/](/Users/michaelchaves/GitHub/creative-supply-engine/assets)
+
+Sample repo state:
+
+- `citrus-sparkling-water` already has a reusable hero asset
+- `oat-energy-bar` starts without a reusable hero asset
+
+If you want to re-show the missing-asset path after a live run, delete:
 
 ```bash
-make demo-live
+rm -f assets/oat-energy-bar/hero.png
 ```
 
-If you want to re-demonstrate the missing-asset path after a live run, delete
-`assets/oat-energy-bar/hero.png` first.
+## Outputs
 
-Run tests:
-
-```bash
-python -m unittest discover -s tests
-```
-
-Or use:
-
-```bash
-make test
-```
-
-## CLI Branding
-
-The PULSE-branded terminal presentation is cosmetic only. It improves readability
-for real CLI runs, but does not affect pipeline correctness, orchestration, or
-provider behavior.
-
-- real CLI runs show a compact PULSE header and restrained status sections
-- `--version` prints the current CLI version and exits
-- `--no-color` renders the same output without ANSI styling
-- programmatic test calls remain quiet because the header is only printed during
-  real CLI entrypoint runs
-
-Monochrome example:
+Generated files are written to:
 
 ```text
- ____  _   _ _     ____  _____   PULSE
-|  _ \| | | | |   / ___|| ____|
-| |_) | | | | |   \___ \|  _|
-|  __/| |_| | |___ ___) | |___
-|_|    \___/|_____|____/|_____|
-Creative Supply Engine · PULSE Beverages            v0.3.0
+outputs/<campaign-slug>/<product-slug>/<locale>/<ratio>/final.png
 ```
-
-Explicit ANSI example:
-
-```text
-\x1b[1m\x1b[38;2;244;197;66m ____  _   _ _     ____  _____   PULSE\x1b[0m
-\x1b[38;2;247;244;237mCreative Supply Engine · PULSE Beverages\x1b[0m            \x1b[1m\x1b[38;2;244;197;66mv0.3.0\x1b[0m
-```
-
-## Sample Input And Output Structure
-
-```text
-creative-supply-engine/
-├── briefs/
-│   └── campaign.yaml
-├── assets/
-│   ├── citrus-sparkling-water/
-│   │   └── hero.png
-│   ├── oat-energy-bar/
-│   └── common/
-│       └── pulse-beverages-logo.png
-├── outputs/
-│   └── summer-citrus-reset/
-│       ├── citrus-sparkling-water/
-│       │   └── en_US/
-│       │       └── 1x1/
-│       │           └── final.png
-│       ├── oat-energy-bar/
-│       │   └── es_MX/
-│       │       └── 16x9/
-│       │           └── final.png
-│       └── run_log.json
-└── src/
-```
-
-The localized output pattern is:
-
-`outputs/<campaign-slug>/<product-slug>/<locale>/<ratio>/final.png`
 
 Example:
 
-`outputs/summer-citrus-reset/citrus-sparkling-water/en_US/1x1/final.png`
+```text
+outputs/summer-citrus-reset/citrus-sparkling-water/en_US/1x1/final.png
+```
 
-## Reusable Assets vs Runtime Outputs
+Each run also writes:
 
-Storage behavior stays strict:
+```text
+outputs/<campaign-slug>/run_log.json
+```
 
-- reusable product heroes live under `assets/`
-- the Pulse Beverages logo also lives under `assets/`
-- localized campaign outputs live under `outputs/`
-- a generated hero is saved back to `assets/<product-slug>/hero.png` only when it is a real OpenAI result
-- placeholder fallbacks are never written into the reusable asset library
+## Notes
 
-This keeps reusable assets clean and makes the reuse-first story easy to explain.
+- If `OPENAI_API_KEY` is not set, the pipeline still runs and uses a placeholder hero where generation is needed.
+- The CLI header/styling is cosmetic only.
+- Text and logo are applied deterministically after image generation.
 
-## Why Text And Logo Are Applied Post-Generation
+## Validation
 
-Campaign text and logos are composited after image generation on purpose:
-
-- deterministic typography is more reliable than model-rendered text
-- the same hero can be reused across multiple markets
-- safe margins and logo placement stay consistent across aspect ratios
-- brand governance is easier to explain and verify in code
-
-The model is used to create the hero image. Pillow handles the final brand composition.
-
-## Design Decisions
-
-- **Localized but reuse-first:** Hero generation happens once per product, while localization happens in the composition layer.
-- **Brand-aware overlay:** The overlay uses brand colors from the brief and includes CTA text when present, without turning into a design system.
-- **Deterministic logo compositing:** The logo is loaded from `brand.logo_path` and placed inside safe margins after the text overlay.
-- **Lightweight compliance:** Checks are rule-based and readable: file existence, dimensions, campaign message presence, prohibited words, and logo application.
-- **Thin provider boundary:** OpenAI stays isolated in `image_generator.py`; the rest of the pipeline only cares about a returned Pillow image and provenance.
-- **Local-first storage:** The repo remains a local POC with organized folders rather than cloud services or storage abstractions.
-
-## Assumptions And Limitations
-
-- The same hero asset is reused across markets for a given product.
-- Compliance checks are deterministic and metadata-driven; there is no OCR or computer vision.
-- The overlay is intentionally simple and only uses the brand color palette plus CTA text.
-- Logo placement is consistent but not product-aware beyond safe margins.
-- The OpenAI wrapper only requests one base hero image at a time.
-- This proof of concept does not include approvals, concurrency, asset versioning, or workflow orchestration.
-
-## Future Improvements Intentionally Left Out
-
-- richer brand rules such as legal disclaimers per ratio or per market
-- logo-safe zones that vary by product category
-- asset review states and approval flows
-- parallel execution for high campaign volume
-- stronger compliance checks beyond deterministic rules
+```bash
+python -m unittest discover -s tests -v
+```
