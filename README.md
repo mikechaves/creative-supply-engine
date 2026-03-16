@@ -15,7 +15,7 @@ Local proof of concept for reuse-first campaign creative generation.
 3. Change into the project folder.
 
 ```bash
-cd /path/to/creative-supply-engine
+cd /path/to/<downloaded-repo-folder>
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -e .
