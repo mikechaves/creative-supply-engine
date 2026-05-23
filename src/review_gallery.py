@@ -29,16 +29,17 @@ def _render_gallery_html(
     localized_outputs = list(run_log.get("localized_outputs") or [])
     products = _group_by_product(localized_outputs)
     warnings = list(run_log.get("warnings") or [])
-    image_count = sum(
-        len(entry.get("outputs") or {})
-        for entry in localized_outputs
-        if isinstance(entry, dict)
-    )
-    passed_count = sum(
-        1
-        for entry in localized_outputs
-        if isinstance(entry, dict) and entry.get("compliance", {}).get("passed")
-    )
+    brand = run_log.get("brand") or {}
+    brand_name = brand.get("name") if isinstance(brand, dict) else None
+    image_count = 0
+    passed_count = 0
+    for entry in localized_outputs:
+        if not isinstance(entry, dict):
+            continue
+        image_count += len(entry.get("outputs") or {})
+        compliance = entry.get("compliance") or {}
+        if isinstance(compliance, dict) and compliance.get("passed"):
+            passed_count += 1
 
     product_sections = "\n".join(
         _render_product_section(
@@ -300,7 +301,7 @@ def _render_gallery_html(
       <div>
         <h1>{escape(str(run_log.get("campaign_name") or "Campaign"))}</h1>
         <p class="meta">
-          {escape(str(run_log.get("brand", {}).get("name") or "Brand"))} creative review gallery<br>
+          {escape(str(brand_name or "Brand"))} creative review gallery<br>
           Started {escape(str(run_log.get("run_started_at") or "unknown"))} &middot; <a href="{run_log_href}">run log</a>
         </p>
       </div>

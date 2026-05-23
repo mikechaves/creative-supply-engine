@@ -183,6 +183,32 @@ class CreativeSupplyEngineTests(unittest.TestCase):
             self.assertIn("../../assets/demo%20hero.png", gallery_html)
             self.assertIn("energy-bar/en_US/1x1/final%20image.png", gallery_html)
 
+    def test_review_gallery_tolerates_null_brand_and_compliance(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            project_root = Path(temp_dir)
+            run_log = {
+                "campaign_name": "Launch",
+                "brand": None,
+                "localized_outputs": [
+                    {
+                        "product_name": "Sparkling Water",
+                        "locale": "en_US",
+                        "outputs": {},
+                        "compliance": None,
+                    }
+                ],
+            }
+
+            gallery_path = write_review_gallery(
+                campaign_output_dir=project_root / "outputs" / "launch",
+                run_log=run_log,
+                project_root=project_root,
+            )
+
+            gallery_html = gallery_path.read_text(encoding="utf-8")
+            self.assertIn("Brand creative review gallery", gallery_html)
+            self.assertIn("<strong>0</strong><span>passed sets</span>", gallery_html)
+
     def test_pipeline_uses_placeholder_without_saving_reusable_asset(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             project_root = Path(temp_dir)
