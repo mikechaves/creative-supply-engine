@@ -17,6 +17,7 @@ from src.compliance import evaluate_compliance
 from src.config import default_config
 from src.image_generator import GeneratedImageResult, ImageGenerator, OpenAIImageGenerator
 from src.main import main, run_pipeline
+from src.review_gallery import write_review_gallery
 
 
 class FakeGenerator(ImageGenerator):
@@ -112,6 +113,12 @@ class CreativeSupplyEngineTests(unittest.TestCase):
             )
 
             self.assertTrue(log_path.exists())
+            gallery_path = project_root / "outputs" / "summer-citrus-reset" / "index.html"
+            self.assertTrue(gallery_path.exists())
+            self.assertEqual(
+                run_log["review_gallery_path"],
+                "outputs/summer-citrus-reset/index.html",
+            )
             self.assertEqual(len(generator.calls), 1)
             self.assertEqual(len(run_log["localized_outputs"]), 4)
 
@@ -131,6 +138,50 @@ class CreativeSupplyEngineTests(unittest.TestCase):
             self.assertTrue(
                 (project_root / "assets" / "oat-energy-bar" / "hero.png").exists()
             )
+            gallery_html = gallery_path.read_text(encoding="utf-8")
+            self.assertIn("Summer Citrus Reset", gallery_html)
+            self.assertIn("oat-energy-bar/en_US/1x1/final.png", gallery_html)
+            self.assertIn("../../assets/oat-energy-bar/hero.png", gallery_html)
+
+    def test_review_gallery_escapes_content_and_links_relative_assets(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            project_root = Path(temp_dir)
+            campaign_output_dir = project_root / "outputs" / "launch"
+            run_log = {
+                "campaign_name": "Spring <Launch>",
+                "brand": {"name": "Pulse & Co"},
+                "run_started_at": "2026-05-23T00:00:00+00:00",
+                "warnings": ["Use <logo>"],
+                "localized_outputs": [
+                    {
+                        "product_name": "Energy <Bar>",
+                        "locale": "en_US",
+                        "region": "United States",
+                        "campaign_message": "<script>bad()</script>",
+                        "cta": "Shop & save",
+                        "asset_provenance": "generated_openai",
+                        "saved_hero_path": "assets/demo hero.png",
+                        "warnings": [],
+                        "outputs": {
+                            "1x1": "outputs/launch/energy-bar/en_US/1x1/final image.png",
+                        },
+                        "compliance": {"passed": False},
+                    }
+                ],
+            }
+
+            gallery_path = write_review_gallery(
+                campaign_output_dir=campaign_output_dir,
+                run_log=run_log,
+                project_root=project_root,
+            )
+
+            gallery_html = gallery_path.read_text(encoding="utf-8")
+            self.assertIn("Spring &lt;Launch&gt;", gallery_html)
+            self.assertIn("&lt;script&gt;bad()&lt;/script&gt;", gallery_html)
+            self.assertNotIn("<script>bad()</script>", gallery_html)
+            self.assertIn("../../assets/demo%20hero.png", gallery_html)
+            self.assertIn("energy-bar/en_US/1x1/final%20image.png", gallery_html)
 
     def test_pipeline_uses_placeholder_without_saving_reusable_asset(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
