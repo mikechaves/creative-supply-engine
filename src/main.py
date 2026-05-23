@@ -39,6 +39,7 @@ from src.image_generator import ImageGenerator, OpenAIImageGenerator
 from src.logger import write_run_log
 from src.logo_compositor import composite_logo
 from src.overlay import apply_campaign_message, overlay_style_from_brand
+from src.review_gallery import write_review_gallery
 
 try:
     from dotenv import load_dotenv
@@ -166,7 +167,12 @@ def run_pipeline(
                 }
             )
 
+    gallery_path = campaign_output_dir / "index.html"
+    run_log["review_gallery_path"] = to_relative_string(
+        gallery_path, config.project_root
+    )
     log_path = write_run_log(campaign_output_dir, run_log)
+    write_review_gallery(campaign_output_dir, run_log, config.project_root)
     return run_log, log_path
 
 
@@ -320,6 +326,7 @@ def main(argv: list[str] | None = None) -> int:
             )
         )
         print(f"Run log: {to_relative_string(log_path, config.project_root)}")
+        print(f"Review gallery: {run_log.get('review_gallery_path')}")
         if run_log["warnings"]:
             print(
                 render_warning(
@@ -330,7 +337,8 @@ def main(argv: list[str] | None = None) -> int:
     else:
         print(
             f"Processed {len(run_log['localized_outputs'])} localized creative set(s). "
-            f"Run log: {to_relative_string(log_path, config.project_root)}"
+            f"Run log: {to_relative_string(log_path, config.project_root)} "
+            f"Review gallery: {run_log.get('review_gallery_path')}"
         )
     return 0
 

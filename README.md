@@ -53,8 +53,8 @@ python -m src.main
 
 ## Sample Inputs
 
-- brief: [briefs/campaign.yaml](/Users/michaelchaves/GitHub/creative-supply-engine/briefs/campaign.yaml)
-- reusable assets: [assets/](/Users/michaelchaves/GitHub/creative-supply-engine/assets)
+- brief: [briefs/campaign.yaml](briefs/campaign.yaml)
+- reusable assets: [assets/](assets/)
 
 Sample repo state:
 
@@ -85,6 +85,12 @@ Each run also writes:
 
 ```text
 outputs/<campaign-slug>/run_log.json
+```
+
+And a browser-friendly review gallery:
+
+```text
+outputs/<campaign-slug>/index.html
 ```
 
 ## Notes
