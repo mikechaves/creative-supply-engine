@@ -4,6 +4,7 @@ import base64
 from contextlib import redirect_stderr
 import io
 import json
+import os
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -92,6 +93,31 @@ class CreativeSupplyEngineTests(unittest.TestCase):
                 output_path.relative_to(config.project_root).as_posix(),
                 "outputs/summer-citrus-reset/citrus-sparkling-water/en_US/1x1/final.png",
             )
+
+    def test_default_config_discovers_project_root_from_current_directory(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            project_root = Path(temp_dir)
+            self._create_project_structure(project_root)
+            self._write_brief(project_root)
+            (project_root / "src").mkdir()
+            nested_dir = project_root / "briefs"
+            previous_cwd = Path.cwd()
+            try:
+                os.chdir(nested_dir)
+                config = default_config()
+            finally:
+                os.chdir(previous_cwd)
+
+            self.assertEqual(config.project_root, project_root.resolve())
+            self.assertEqual(config.briefs_dir, project_root.resolve() / "briefs")
+
+    def test_default_config_honors_explicit_project_root(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            project_root = Path(temp_dir) / "explicit"
+
+            config = default_config(project_root)
+
+            self.assertEqual(config.project_root, project_root.resolve())
 
     def test_pipeline_creates_localized_outputs_and_compliance_results(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:

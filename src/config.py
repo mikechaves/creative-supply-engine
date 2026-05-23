@@ -33,11 +33,26 @@ class AppConfig:
 
 
 def default_config(project_root: Path | None = None) -> AppConfig:
-    resolved_root = project_root or Path(__file__).resolve().parent.parent
+    resolved_root = project_root or _discover_project_root()
     resolved_root = resolved_root.resolve()
     return AppConfig(
         project_root=resolved_root,
         briefs_dir=resolved_root / "briefs",
         assets_dir=resolved_root / "assets",
         outputs_dir=resolved_root / "outputs",
+    )
+
+
+def _discover_project_root() -> Path:
+    for candidate in (Path.cwd().resolve(), *Path.cwd().resolve().parents):
+        if _looks_like_project_root(candidate):
+            return candidate
+    return Path(__file__).resolve().parent.parent
+
+
+def _looks_like_project_root(path: Path) -> bool:
+    return (
+        (path / "briefs" / "campaign.yaml").exists()
+        and (path / "assets").exists()
+        and (path / "src").exists()
     )
