@@ -99,6 +99,10 @@ outputs/<campaign-slug>/index.html
 - The CLI header/styling is cosmetic only.
 - Text and logo are applied deterministically after image generation.
 
+## Planning
+
+- [Backlog](docs/backlog/README.md)
+
 ## Validation
 
 ```bash
