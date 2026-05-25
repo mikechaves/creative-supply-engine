@@ -12,6 +12,7 @@ from pathlib import Path
 
 from PIL import Image
 
+from src.asset_hygiene import reset_sample_assets
 from src.asset_manager import get_final_output_path
 from src.brief_loader import BriefValidationError, load_brief
 from src.compliance import evaluate_compliance
@@ -292,6 +293,34 @@ class CreativeSupplyEngineTests(unittest.TestCase):
             self.assertEqual(result.creative_file_count, 12)
             self.assertEqual(result.placeholder_count, 2)
             self.assertTrue(source_oat_hero.exists())
+
+    def test_reset_sample_assets_removes_generated_heroes_and_preserves_tracked_assets(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            project_root = Path(temp_dir)
+            self._create_project_structure(project_root)
+            logo_path = project_root / "assets" / "common" / "pulse-beverages-logo.png"
+            citrus_hero_path = project_root / "assets" / "citrus-sparkling-water" / "hero.png"
+            oat_png_path = project_root / "assets" / "oat-energy-bar" / "hero.png"
+            oat_jpg_path = project_root / "assets" / "oat-energy-bar" / "hero.jpg"
+            output_path = project_root / "outputs" / "summer-citrus-reset" / "index.html"
+
+            self._write_logo(logo_path)
+            self._write_image(citrus_hero_path, (1200, 900), "#ffd56b")
+            self._write_image(oat_png_path, (1024, 1024), "#8a6f4d")
+            oat_jpg_path.write_text("generated sample hero", encoding="utf-8")
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            output_path.write_text("<html></html>", encoding="utf-8")
+
+            result = reset_sample_assets(project_root, include_outputs=True)
+
+            self.assertFalse(oat_png_path.exists())
+            self.assertFalse(oat_jpg_path.exists())
+            self.assertFalse((project_root / "outputs").exists())
+            self.assertTrue(logo_path.exists())
+            self.assertTrue(citrus_hero_path.exists())
+            self.assertIn(oat_png_path.resolve(), result.removed_paths)
+            self.assertIn(oat_jpg_path.resolve(), result.removed_paths)
+            self.assertIn((project_root / "outputs").resolve(), result.removed_paths)
 
     def test_compliance_flags_missing_required_logo(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:

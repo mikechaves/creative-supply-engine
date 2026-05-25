@@ -95,10 +95,27 @@ Sample repo state:
 - `citrus-sparkling-water` already has a reusable hero asset
 - `oat-energy-bar` starts without a reusable hero asset
 
-If you want to re-show the missing-asset path after a live run, delete:
+Tracked reusable assets:
+
+- `assets/common/pulse-beverages-logo.png`
+- `assets/citrus-sparkling-water/hero.png`
+- `assets/oat-energy-bar/.gitkeep`
+
+Generated local files ignored by git:
+
+- `outputs/`
+- `assets/oat-energy-bar/hero.*`
+
+If you want to re-show the missing-asset path after a live run, reset the sample state:
 
 ```bash
-rm -f assets/oat-energy-bar/hero.png
+pulse-cse-reset-sample
+```
+
+To also clear generated review outputs:
+
+```bash
+pulse-cse-reset-sample --include-outputs
 ```
 
 ## Outputs
