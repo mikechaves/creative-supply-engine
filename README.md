@@ -16,11 +16,27 @@ Local proof of concept for reuse-first campaign creative generation.
 
 ```bash
 cd /path/to/<downloaded-repo-folder>
+python3 --version
 python3 -m venv .venv
 source .venv/bin/activate
-pip install -e .
+python -m pip install --upgrade pip setuptools wheel
+python -m pip install -e .
 cp .env.example .env
+which pulse-cse
+pulse-cse --version
 ```
+
+The `python3 --version` output must be Python 3.10 or newer. If your system `python3` is older,
+use a newer interpreter explicitly, for example `python3.12 -m venv .venv`.
+
+After installation, `which pulse-cse` should point inside this checkout:
+
+```text
+/path/to/<downloaded-repo-folder>/.venv/bin/pulse-cse
+```
+
+If it points somewhere else, a stale global install is taking precedence. Reactivate the venv and
+rerun the install commands above before using `pulse-cse`.
 
 If you want live generation, add your OpenAI key to `.env`:
 

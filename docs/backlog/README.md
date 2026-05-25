@@ -25,6 +25,7 @@ following in the same change:
 
 - [Active Backlog](./ACTIVE_BACKLOG.md): current product, demo, and packaging execution queue.
 - [Future Backlog](./FUTURE_BACKLOG.md): deferred, long-range, or decision-bound work.
+- [Backlog Archive](./archive/): completed and superseded execution boards.
 
 ## Rules
 
