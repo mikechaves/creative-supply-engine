@@ -40,7 +40,6 @@ Rules:
 
 | Priority | Area              | Item                                                                 | Status | Validation / Exit Criteria                                                                                                                                      |
 | -------- | ----------------- | -------------------------------------------------------------------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| P0       | Demo Reliability  | Add a repeatable smoke/demo command for placeholder and live modes.   | TODO   | One documented command can run the sample without an API key, verify generated files, verify `run_log.json`, and verify `index.html` without mutating tracked assets. |
 | P0       | Asset Hygiene     | Prevent accidental tracked asset drift during local demo runs.        | TODO   | Demo instructions and tests make clear which generated files are ignored, which reusable assets are tracked, and how to reset generated heroes without deleting required brand assets. |
 | P1       | Review Gallery    | Improve review gallery status visibility for provenance and warnings. | TODO   | Gallery clearly distinguishes reused, generated, and placeholder hero assets; warning counts are visible per localized set; missing logo and placeholder states are easy to spot. |
 | P1       | Brief Authoring   | Add brief validation feedback for common authoring mistakes.          | TODO   | Malformed or incomplete briefs return actionable field-level messages for missing brand colors, products, markets, logo paths, and unsupported locale/ratio assumptions. |
@@ -63,6 +62,7 @@ See [Future Backlog](./FUTURE_BACKLOG.md) for the full parking lot.
 
 ## Evidence
 
+- [Completed Demo Reliability Backlog](./archive/COMPLETED_DEMO_RELIABILITY_BACKLOG_2026-05.md)
 - [Completed Setup Backlog](./archive/COMPLETED_SETUP_BACKLOG_2026-05.md)
 - [Project README](../../README.md)
 - [Sample Campaign Brief](../../briefs/campaign.yaml)

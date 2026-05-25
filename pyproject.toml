@@ -16,6 +16,7 @@ dependencies = [
 
 [project.scripts]
 pulse-cse = "src.main:main"
+pulse-cse-smoke = "src.smoke_demo:main"
 
 [tool.setuptools]
 packages = ["src"]

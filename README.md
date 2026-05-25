@@ -67,6 +67,24 @@ The original module entrypoint also still works:
 python -m src.main
 ```
 
+## Smoke Demo
+
+Run the sample campaign in placeholder mode without mutating tracked assets:
+
+```bash
+pulse-cse-smoke
+```
+
+The smoke command copies the sample brief and assets into a temporary project, runs the real
+pipeline with `OPENAI_API_KEY` unset, and verifies final creatives, `run_log.json`, and
+`index.html`.
+
+To test live OpenAI image generation explicitly:
+
+```bash
+pulse-cse-smoke --live
+```
+
 ## Sample Inputs
 
 - brief: [briefs/campaign.yaml](briefs/campaign.yaml)

@@ -19,6 +19,7 @@ from src.config import default_config
 from src.image_generator import GeneratedImageResult, ImageGenerator, OpenAIImageGenerator
 from src.main import main, run_pipeline
 from src.review_gallery import write_review_gallery
+from src.smoke_demo import run_smoke_demo
 
 
 class FakeGenerator(ImageGenerator):
@@ -270,6 +271,27 @@ class CreativeSupplyEngineTests(unittest.TestCase):
             self.assertFalse(
                 (project_root / "assets" / "oat-energy-bar" / "hero.png").exists()
             )
+
+    def test_smoke_demo_runs_in_temp_project_without_mutating_source_assets(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            project_root = Path(temp_dir)
+            self._create_project_structure(project_root)
+            self._write_brief(project_root)
+            self._write_logo(project_root / "assets" / "common" / "pulse-beverages-logo.png")
+            self._write_image(
+                project_root / "assets" / "citrus-sparkling-water" / "hero.png",
+                (1200, 900),
+                "#ffd56b",
+            )
+            source_oat_hero = project_root / "assets" / "oat-energy-bar" / "hero.png"
+            self._write_image(source_oat_hero, (1024, 1024), "#8a6f4d")
+
+            result = run_smoke_demo(source_root=project_root)
+
+            self.assertEqual(result.localized_set_count, 4)
+            self.assertEqual(result.creative_file_count, 12)
+            self.assertEqual(result.placeholder_count, 2)
+            self.assertTrue(source_oat_hero.exists())
 
     def test_compliance_flags_missing_required_logo(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
