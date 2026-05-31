@@ -2,7 +2,7 @@
 
 > Current execution queue for Creative Supply Engine.
 
-_Current as of: 2026-05-24_
+_Current as of: 2026-05-31_
 
 ---
 
@@ -40,7 +40,6 @@ Rules:
 
 | Priority | Area              | Item                                                                 | Status | Validation / Exit Criteria                                                                                                                                      |
 | -------- | ----------------- | -------------------------------------------------------------------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| P1       | Output Packaging  | Add an optional review bundle export.                                | TODO   | A command can package final creatives, `run_log.json`, `index.html`, and source brief into a shareable ZIP without including `.env`, caches, or untracked source assets. |
 | P2       | CI                | Add lightweight CI for install, tests, and sample placeholder run.    | TODO   | GitHub Actions or equivalent validates Python version support, editable install, unit tests, and a no-key sample run on every push. |
 | P2       | Product Direction | Decide whether CSE stays CLI-only or gains a local web review UI.     | RESEARCH | Decision note compares CLI plus static gallery against a small local web app, including demo value, implementation cost, and maintenance risk. |
 
@@ -59,6 +58,7 @@ See [Future Backlog](./FUTURE_BACKLOG.md) for the full parking lot.
 
 ## Evidence
 
+- [Completed Output Packaging Backlog](./archive/COMPLETED_OUTPUT_PACKAGING_BACKLOG_2026-05.md)
 - [Completed Brief Authoring Backlog](./archive/COMPLETED_BRIEF_AUTHORING_BACKLOG_2026-05.md)
 - [Completed Review Gallery Backlog](./archive/COMPLETED_REVIEW_GALLERY_BACKLOG_2026-05.md)
 - [Completed Asset Hygiene Backlog](./archive/COMPLETED_ASSET_HYGIENE_BACKLOG_2026-05.md)

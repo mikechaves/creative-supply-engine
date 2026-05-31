@@ -18,6 +18,7 @@ dependencies = [
 pulse-cse = "src.main:main"
 pulse-cse-smoke = "src.smoke_demo:main"
 pulse-cse-reset-sample = "src.asset_hygiene:main"
+pulse-cse-package = "src.output_packager:main"
 
 [tool.setuptools]
 packages = ["src"]

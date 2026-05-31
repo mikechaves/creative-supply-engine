@@ -145,6 +145,17 @@ And a browser-friendly review gallery:
 outputs/<campaign-slug>/index.html
 ```
 
+## Review Bundle
+
+After a run, package review artifacts into a shareable ZIP:
+
+```bash
+pulse-cse-package --campaign summer-citrus-reset
+```
+
+The bundle includes final creatives, `run_log.json`, `index.html`, and the source brief. It does
+not include `.env`, caches, reusable source assets, or generated local hero assets.
+
 ## Notes
 
 - If `OPENAI_API_KEY` is not set, the pipeline still runs and uses a placeholder hero where generation is needed.

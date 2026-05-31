@@ -7,6 +7,7 @@ import json
 import os
 import tempfile
 import unittest
+import zipfile
 from unittest.mock import patch
 from pathlib import Path
 
@@ -19,6 +20,7 @@ from src.compliance import evaluate_compliance
 from src.config import default_config
 from src.image_generator import GeneratedImageResult, ImageGenerator, OpenAIImageGenerator
 from src.main import main, run_pipeline
+from src.output_packager import package_review_bundle
 from src.review_gallery import write_review_gallery
 from src.smoke_demo import run_smoke_demo
 
@@ -258,6 +260,49 @@ class CreativeSupplyEngineTests(unittest.TestCase):
             self.assertIn("Summer Citrus Reset", gallery_html)
             self.assertIn("oat-energy-bar/en_US/1x1/final.png", gallery_html)
             self.assertIn("../../assets/oat-energy-bar/hero.png", gallery_html)
+
+    def test_package_review_bundle_includes_review_artifacts_and_excludes_local_state(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            project_root = Path(temp_dir)
+            self._create_project_structure(project_root)
+            self._write_brief(project_root)
+            self._write_logo(project_root / "assets" / "common" / "pulse-beverages-logo.png")
+            self._write_image(
+                project_root / "assets" / "citrus-sparkling-water" / "hero.png",
+                (1200, 900),
+                "#ffd56b",
+            )
+            (project_root / ".env").write_text("OPENAI_API_KEY=secret\n", encoding="utf-8")
+            (project_root / "outputs" / "__pycache__").mkdir(parents=True)
+            (project_root / "outputs" / "__pycache__" / "cache.pyc").write_bytes(b"cache")
+            generator = FakeGenerator(provenance="generated_placeholder")
+
+            run_pipeline(
+                brief_path=project_root / "briefs" / "campaign.yaml",
+                config=default_config(project_root),
+                generator=generator,
+            )
+
+            result = package_review_bundle(project_root, campaign="summer-citrus-reset")
+
+            self.assertTrue(result.bundle_path.exists())
+            with zipfile.ZipFile(result.bundle_path) as bundle:
+                names = set(bundle.namelist())
+
+            self.assertIn("briefs/campaign.yaml", names)
+            self.assertIn("outputs/summer-citrus-reset/run_log.json", names)
+            self.assertIn("outputs/summer-citrus-reset/index.html", names)
+            self.assertIn(
+                "outputs/summer-citrus-reset/citrus-sparkling-water/en_US/1x1/final.png",
+                names,
+            )
+            self.assertIn(
+                "outputs/summer-citrus-reset/oat-energy-bar/es_MX/16x9/final.png",
+                names,
+            )
+            self.assertNotIn(".env", names)
+            self.assertFalse(any(name.startswith("assets/") for name in names))
+            self.assertFalse(any("__pycache__" in name for name in names))
 
     def test_review_gallery_escapes_content_and_links_relative_assets(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
