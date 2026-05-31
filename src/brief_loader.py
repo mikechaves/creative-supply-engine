@@ -6,6 +6,8 @@ import re
 
 import yaml
 
+from src.config import RATIO_SPECS
+
 
 class BriefValidationError(ValueError):
     """Raised when a campaign brief is missing required data."""
@@ -58,6 +60,11 @@ class CampaignBrief:
     products: list[ProductBrief]
 
 
+SUPPORTED_LOCALE_PATTERN = re.compile(r"^[a-z]{2}_[A-Z]{2}$")
+UNSUPPORTED_RATIO_FIELD_NAMES = frozenset({"ratio", "ratios", "ratio_specs"})
+SUPPORTED_RATIO_LABEL = ", ".join(RATIO_SPECS)
+
+
 def load_brief(path: Path) -> CampaignBrief:
     if not path.exists():
         raise BriefValidationError(f"Brief file not found: {path}")
@@ -73,13 +80,9 @@ def load_brief(path: Path) -> CampaignBrief:
     if not isinstance(raw_data, dict):
         raise BriefValidationError("Brief YAML must contain a top-level mapping.")
 
-    missing_fields = [
-        field for field in ("campaign_name", "brand", "markets", "products") if not raw_data.get(field)
-    ]
-    if missing_fields:
-        raise BriefValidationError(
-            f"Brief is missing required field(s): {', '.join(missing_fields)}"
-        )
+    authoring_errors = _collect_authoring_errors(raw_data)
+    if authoring_errors:
+        raise BriefValidationError(_format_authoring_errors(authoring_errors))
 
     brand = _load_brand(raw_data["brand"])
     markets = _load_markets(raw_data["markets"])
@@ -110,6 +113,131 @@ def build_generation_prompt(brief: CampaignBrief, product: ProductBrief) -> str:
         f"collage layouts, and extra products. Designed to support these localized markets: "
         f"{market_context}."
     )
+
+
+def _collect_authoring_errors(raw_data: dict) -> list[str]:
+    errors: list[str] = []
+    _collect_unsupported_ratio_fields(raw_data, "", errors)
+
+    if not _has_required_text(raw_data, "campaign_name"):
+        errors.append("campaign_name is required.")
+
+    _collect_brand_errors(raw_data.get("brand"), errors)
+    _collect_markets_errors(raw_data.get("markets"), errors)
+    _collect_products_errors(raw_data.get("products"), errors)
+    return errors
+
+
+def _collect_brand_errors(raw_brand: object, errors: list[str]) -> None:
+    if not isinstance(raw_brand, dict):
+        errors.append("brand must be a mapping with name, slug, logo_path, colors, and compliance.")
+        return
+
+    _collect_unsupported_ratio_fields(raw_brand, "brand", errors)
+    for key in ("name", "slug", "logo_path"):
+        if not _has_required_text(raw_brand, key):
+            errors.append(f"brand.{key} is required.")
+
+    colors = raw_brand.get("colors")
+    if not isinstance(colors, dict):
+        errors.append(
+            "brand.colors must be a mapping with primary, secondary, accent, and text_light."
+        )
+    else:
+        for key in ("primary", "secondary", "accent", "text_light"):
+            field_name = f"brand.colors.{key}"
+            value = _required_text_value(colors, key)
+            if not value:
+                errors.append(f"{field_name} is required.")
+            elif not re.fullmatch(r"#[0-9a-fA-F]{6}", value):
+                errors.append(f"{field_name} must be a hex color like #112233.")
+
+    compliance = raw_brand.get("compliance")
+    if not isinstance(compliance, dict):
+        errors.append("brand.compliance must be a mapping with require_logo and prohibited_words.")
+        return
+    if not isinstance(compliance.get("require_logo"), bool):
+        errors.append("brand.compliance.require_logo must be true or false.")
+    if not isinstance(compliance.get("prohibited_words"), list):
+        errors.append("brand.compliance.prohibited_words must be a list.")
+
+
+def _collect_markets_errors(raw_markets: object, errors: list[str]) -> None:
+    if not isinstance(raw_markets, list) or not raw_markets:
+        errors.append(
+            "markets must include at least one market with locale, region, audience, "
+            "and campaign_message."
+        )
+        return
+
+    seen_locales: set[str] = set()
+    for index, raw_market in enumerate(raw_markets, start=1):
+        field_prefix = f"markets[{index}]"
+        if not isinstance(raw_market, dict):
+            errors.append(f"{field_prefix} must be a mapping.")
+            continue
+
+        _collect_unsupported_ratio_fields(raw_market, field_prefix, errors)
+        locale = _required_text_value(raw_market, "locale")
+        if not locale:
+            errors.append(f"{field_prefix}.locale is required.")
+        elif not SUPPORTED_LOCALE_PATTERN.fullmatch(locale):
+            errors.append(
+                f"{field_prefix}.locale must use locale_REGION format like en_US; "
+                f"received {locale!r}."
+            )
+        elif locale in seen_locales:
+            errors.append(f"{field_prefix}.locale duplicates an earlier market: {locale}.")
+        else:
+            seen_locales.add(locale)
+
+        for key in ("region", "audience", "campaign_message"):
+            if not _has_required_text(raw_market, key):
+                errors.append(f"{field_prefix}.{key} is required.")
+
+
+def _collect_products_errors(raw_products: object, errors: list[str]) -> None:
+    if not isinstance(raw_products, list) or len(raw_products) < 2:
+        errors.append("products must include at least two products.")
+        if not isinstance(raw_products, list):
+            return
+
+    for index, raw_product in enumerate(raw_products or [], start=1):
+        field_prefix = f"products[{index}]"
+        if not isinstance(raw_product, dict):
+            errors.append(f"{field_prefix} must be a mapping.")
+            continue
+        _collect_unsupported_ratio_fields(raw_product, field_prefix, errors)
+        if not _has_required_text(raw_product, "name"):
+            errors.append(f"{field_prefix}.name is required.")
+
+
+def _collect_unsupported_ratio_fields(
+    container: dict,
+    field_prefix: str,
+    errors: list[str],
+) -> None:
+    for key in sorted(UNSUPPORTED_RATIO_FIELD_NAMES.intersection(container)):
+        field_name = f"{field_prefix}.{key}" if field_prefix else key
+        errors.append(
+            f"{field_name} is not supported in campaign briefs yet; "
+            f"current fixed ratios are {SUPPORTED_RATIO_LABEL}."
+        )
+
+
+def _format_authoring_errors(errors: list[str]) -> str:
+    if len(errors) == 1:
+        return errors[0]
+    formatted_errors = "\n- ".join(errors)
+    return f"{len(errors)} brief authoring issue(s) found:\n- {formatted_errors}"
+
+
+def _has_required_text(container: dict, key: str) -> bool:
+    return bool(_required_text_value(container, key))
+
+
+def _required_text_value(container: dict, key: str) -> str:
+    return str(container.get(key) or "").strip()
 
 
 def _load_brand(raw_brand: object) -> BrandBrief:

@@ -81,6 +81,98 @@ class CreativeSupplyEngineTests(unittest.TestCase):
             with self.assertRaises(BriefValidationError):
                 load_brief(brief_path)
 
+    def test_load_brief_reports_multiple_authoring_errors(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            brief_path = Path(temp_dir) / "campaign.yaml"
+            brief_path.write_text(
+                "\n".join(
+                    [
+                        "campaign_name: Authoring Errors",
+                        "ratios:",
+                        "  - 4x5",
+                        "brand:",
+                        "  name: Pulse Beverages",
+                        "  slug: pulse-beverages",
+                        "  colors:",
+                        "    primary: \"#13324A\"",
+                        "    secondary: blue",
+                        "  compliance:",
+                        "    require_logo: true",
+                        "    prohibited_words: []",
+                        "markets: []",
+                        "products:",
+                        "  - prompt_override: Demo",
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            with self.assertRaises(BriefValidationError) as context:
+                load_brief(brief_path)
+
+            message = str(context.exception)
+            self.assertIn("brief authoring issue(s) found", message)
+            self.assertIn("ratios is not supported", message)
+            self.assertIn("brand.logo_path is required.", message)
+            self.assertIn("brand.colors.secondary must be a hex color", message)
+            self.assertIn("brand.colors.accent is required.", message)
+            self.assertIn("brand.colors.text_light is required.", message)
+            self.assertIn("markets must include at least one market", message)
+            self.assertIn("products must include at least two products.", message)
+            self.assertIn("products[1].name is required.", message)
+
+    def test_load_brief_rejects_unsupported_locale_and_ratio_fields(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            brief_path = Path(temp_dir) / "campaign.yaml"
+            brief_path.write_text(
+                "\n".join(
+                    [
+                        "campaign_name: Locale And Ratio Errors",
+                        "brand:",
+                        "  name: Pulse Beverages",
+                        "  slug: pulse-beverages",
+                        "  logo_path: assets/common/pulse-beverages-logo.png",
+                        "  colors:",
+                        "    primary: \"#13324A\"",
+                        "    secondary: \"#214B67\"",
+                        "    accent: \"#F4C542\"",
+                        "    text_light: \"#F7F4ED\"",
+                        "  compliance:",
+                        "    require_logo: true",
+                        "    prohibited_words: []",
+                        "markets:",
+                        "  - locale: en-US",
+                        "    ratios:",
+                        "      - 4x5",
+                        "    region: United States",
+                        "    audience: Busy professionals",
+                        "    campaign_message: Bright Start.",
+                        "  - locale: es_MX",
+                        "    region: Mexico",
+                        "    audience: Profesionales ocupados",
+                        "    campaign_message: Sabor brillante.",
+                        "products:",
+                        "  - name: citrus-sparkling-water",
+                        "    ratio: 4x5",
+                        "  - name: oat-energy-bar",
+                        "    ratio_specs:",
+                        "      4x5: [1080, 1350]",
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            with self.assertRaises(BriefValidationError) as context:
+                load_brief(brief_path)
+
+            message = str(context.exception)
+            self.assertIn("markets[1].locale must use locale_REGION format like en_US", message)
+            self.assertIn("markets[1].ratios is not supported", message)
+            self.assertIn("products[1].ratio is not supported", message)
+            self.assertIn("products[2].ratio_specs is not supported", message)
+
     def test_localized_output_path_includes_locale(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             config = default_config(Path(temp_dir))
