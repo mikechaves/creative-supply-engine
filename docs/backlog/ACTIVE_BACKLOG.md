@@ -40,7 +40,6 @@ Rules:
 
 | Priority | Area              | Item                                                                 | Status | Validation / Exit Criteria                                                                                                                                      |
 | -------- | ----------------- | -------------------------------------------------------------------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| P1       | Review Gallery    | Improve review gallery status visibility for provenance and warnings. | TODO   | Gallery clearly distinguishes reused, generated, and placeholder hero assets; warning counts are visible per localized set; missing logo and placeholder states are easy to spot. |
 | P1       | Brief Authoring   | Add brief validation feedback for common authoring mistakes.          | TODO   | Malformed or incomplete briefs return actionable field-level messages for missing brand colors, products, markets, logo paths, and unsupported locale/ratio assumptions. |
 | P1       | Output Packaging  | Add an optional review bundle export.                                | TODO   | A command can package final creatives, `run_log.json`, `index.html`, and source brief into a shareable ZIP without including `.env`, caches, or untracked source assets. |
 | P2       | CI                | Add lightweight CI for install, tests, and sample placeholder run.    | TODO   | GitHub Actions or equivalent validates Python version support, editable install, unit tests, and a no-key sample run on every push. |
@@ -61,6 +60,7 @@ See [Future Backlog](./FUTURE_BACKLOG.md) for the full parking lot.
 
 ## Evidence
 
+- [Completed Review Gallery Backlog](./archive/COMPLETED_REVIEW_GALLERY_BACKLOG_2026-05.md)
 - [Completed Asset Hygiene Backlog](./archive/COMPLETED_ASSET_HYGIENE_BACKLOG_2026-05.md)
 - [Completed Demo Reliability Backlog](./archive/COMPLETED_DEMO_RELIABILITY_BACKLOG_2026-05.md)
 - [Completed Setup Backlog](./archive/COMPLETED_SETUP_BACKLOG_2026-05.md)

@@ -33,6 +33,7 @@ def _render_gallery_html(
     brand_name = brand.get("name") if isinstance(brand, dict) else None
     image_count = 0
     passed_count = 0
+    provenance_counts = _count_asset_provenance(localized_outputs)
     for entry in localized_outputs:
         if not isinstance(entry, dict):
             continue
@@ -51,6 +52,7 @@ def _render_gallery_html(
         for product_name, entries in products.items()
     )
     warning_panel = _render_warning_panel(warnings)
+    provenance_summary = _render_provenance_summary(provenance_counts, len(warnings))
     run_log_href = _relative_href(
         campaign_output_dir / "run_log.json", campaign_output_dir
     )
@@ -171,6 +173,44 @@ def _render_gallery_html(
       color: #5e3d0b;
     }}
 
+    .summary-strip {{
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 20px;
+    }}
+
+    .summary-chip {{
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 34px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      border-radius: 999px;
+      padding: 6px 11px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 650;
+    }}
+
+    .summary-chip strong {{
+      color: var(--ink);
+      font-size: 15px;
+    }}
+
+    .summary-chip.generated {{
+      border-color: #b8d8cd;
+      background: #ecf8f3;
+    }}
+
+    .summary-chip.placeholder,
+    .summary-chip.warn {{
+      border-color: #e5c68f;
+      background: #fff8e8;
+      color: #5e3d0b;
+    }}
+
     .warning-panel ul {{
       margin: 8px 0 0;
       padding-left: 20px;
@@ -198,9 +238,19 @@ def _render_gallery_html(
       border-bottom: 1px solid var(--line);
     }}
 
+    .badge-stack {{
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 6px;
+      min-width: 120px;
+    }}
+
     .badge {{
+      display: inline-flex;
       flex: 0 0 auto;
-      align-self: start;
+      align-items: center;
+      align-self: flex-start;
       border-radius: 999px;
       padding: 5px 9px;
       font-size: 12px;
@@ -209,9 +259,25 @@ def _render_gallery_html(
       color: var(--ok);
     }}
 
+    .badge.generated {{
+      background: #eef3fb;
+      color: #285a8c;
+    }}
+
+    .badge.placeholder,
     .badge.warn {{
       background: #fff2d9;
       color: var(--warn);
+    }}
+
+    .badge.reused {{
+      background: #e8f4ee;
+      color: var(--ok);
+    }}
+
+    .badge.unknown {{
+      background: #eef0ef;
+      color: var(--muted);
     }}
 
     .details {{
@@ -221,6 +287,20 @@ def _render_gallery_html(
       font-size: 13px;
       line-height: 1.45;
       margin-top: 9px;
+    }}
+
+    .card-warnings {{
+      margin: 0;
+      padding: 12px 16px 14px 34px;
+      border-bottom: 1px solid var(--line);
+      background: #fff8e8;
+      color: #5e3d0b;
+      font-size: 13px;
+      line-height: 1.4;
+    }}
+
+    .card-warnings li + li {{
+      margin-top: 5px;
     }}
 
     .asset-row {{
@@ -312,6 +392,7 @@ def _render_gallery_html(
       </div>
     </section>
     {warning_panel}
+    {provenance_summary}
     {product_sections}
   </main>
 </body>
@@ -329,6 +410,48 @@ def _group_by_product(entries: list[dict]) -> dict[str, list[dict]]:
         )
         grouped[product_name].append(entry)
     return dict(grouped)
+
+
+def _count_asset_provenance(entries: list[dict]) -> dict[str, int]:
+    counts = {
+        "reused_local": 0,
+        "generated_openai": 0,
+        "generated_placeholder": 0,
+        "unknown": 0,
+    }
+    for entry in entries:
+        if not isinstance(entry, dict):
+            continue
+        provenance = str(entry.get("asset_provenance") or "unknown")
+        if provenance not in counts:
+            provenance = "unknown"
+        counts[provenance] += 1
+    return counts
+
+
+def _render_provenance_summary(provenance_counts: dict[str, int], warning_count: int) -> str:
+    chips = (
+        ("reused", "Reused heroes", provenance_counts.get("reused_local", 0)),
+        ("generated", "Generated heroes", provenance_counts.get("generated_openai", 0)),
+        (
+            "placeholder",
+            "Placeholder heroes",
+            provenance_counts.get("generated_placeholder", 0),
+        ),
+        ("unknown", "Unknown provenance", provenance_counts.get("unknown", 0)),
+        ("warn", "Run warnings", warning_count),
+    )
+    chip_html = "\n".join(
+        f'      <span class="summary-chip {escape(css_class)}">'
+        f"<strong>{count}</strong>{escape(label)}</span>"
+        for css_class, label, count in chips
+        if count
+    )
+    if not chip_html:
+        return ""
+    return f"""<section class="summary-strip" aria-label="Asset and warning summary">
+{chip_html}
+    </section>"""
 
 
 def _render_warning_panel(warnings: list[str]) -> str:
@@ -367,26 +490,11 @@ def _render_locale_card(
 ) -> str:
     compliance = entry.get("compliance") or {}
     passed = bool(compliance.get("passed"))
-    badge_class = "badge" if passed else "badge warn"
-    badge_text = "Passed" if passed else "Review"
     warnings = entry.get("warnings") or []
-    warning_text = ""
-    if warnings:
-        warning_text = " &middot; " + escape(f"{len(warnings)} warning(s)")
+    status_badges = _render_status_badges(entry, compliance, passed, len(warnings))
+    warning_list = _render_card_warnings(warnings)
     asset_path = entry.get("hero_source_path") or entry.get("saved_hero_path")
-    asset_label = "Hero asset"
-    if entry.get("saved_hero_path"):
-        asset_label = "Saved hero asset"
-    asset_html = ""
-    if asset_path:
-        asset_href = _relative_href(
-            _project_path(asset_path, project_root),
-            campaign_output_dir,
-        )
-        asset_html = (
-            f'<div class="asset-row">{asset_label}: '
-            f'<a href="{asset_href}"><code>{escape(str(asset_path))}</code></a></div>'
-        )
+    asset_html = _render_asset_row(entry, asset_path, campaign_output_dir, project_root)
 
     creative_tiles = "\n".join(
         _render_creative_tile(ratio_name, output_path, campaign_output_dir, project_root)
@@ -401,16 +509,112 @@ def _render_locale_card(
                 <span>{escape(str(entry.get("region") or "Unknown region"))}</span>
                 <span>{escape(str(entry.get("campaign_message") or ""))}</span>
                 <span>{escape(str(entry.get("cta") or "No CTA"))}</span>
-                <span>{escape(str(entry.get("asset_provenance") or "unknown"))}{warning_text}</span>
+                <span>{escape(_asset_provenance_label(entry.get("asset_provenance")))}</span>
               </div>
             </div>
-            <span class="{badge_class}">{badge_text}</span>
+            <div class="badge-stack" aria-label="Set status">
+{status_badges}
+            </div>
           </div>
+          {warning_list}
           {asset_html}
           <div class="creative-grid">
 {creative_tiles}
           </div>
         </article>"""
+
+
+def _render_status_badges(
+    entry: dict,
+    compliance: dict,
+    passed: bool,
+    warning_count: int,
+) -> str:
+    badges = [
+        ("badge" if passed else "badge warn", "Passed" if passed else "Review"),
+    ]
+    provenance_class, provenance_label = _asset_provenance_badge(
+        entry.get("asset_provenance")
+    )
+    badges.append((provenance_class, provenance_label))
+    logo_label = _logo_status_label(compliance)
+    if logo_label:
+        badges.append(("badge warn", logo_label))
+    warning_class = "badge warn" if warning_count else "badge unknown"
+    badges.append((warning_class, f"{warning_count} warning(s)"))
+    return "\n".join(
+        f'              <span class="{escape(css_class)}">{escape(label)}</span>'
+        for css_class, label in badges
+    )
+
+
+def _render_card_warnings(warnings: list[str]) -> str:
+    if not warnings:
+        return ""
+    items = "\n".join(
+        f"            <li>{escape(str(warning))}</li>" for warning in warnings
+    )
+    return f"""<ul class="card-warnings" aria-label="Localized set warnings">
+{items}
+          </ul>"""
+
+
+def _render_asset_row(
+    entry: dict,
+    asset_path: object,
+    campaign_output_dir: Path,
+    project_root: Path,
+) -> str:
+    provenance = str(entry.get("asset_provenance") or "")
+    if asset_path:
+        asset_href = _relative_href(
+            _project_path(asset_path, project_root),
+            campaign_output_dir,
+        )
+        asset_label = "Hero asset"
+        if entry.get("saved_hero_path"):
+            asset_label = "Saved generated hero"
+        if entry.get("hero_source_path"):
+            asset_label = "Reused hero source"
+        return (
+            f'<div class="asset-row">{asset_label}: '
+            f'<a href="{asset_href}"><code>{escape(str(asset_path))}</code></a></div>'
+        )
+    if provenance == "generated_placeholder":
+        return (
+            '<div class="asset-row">Placeholder hero generated for this run; '
+            "no reusable hero asset was saved.</div>"
+        )
+    return '<div class="asset-row">No hero asset path recorded.</div>'
+
+
+def _asset_provenance_badge(provenance: object) -> tuple[str, str]:
+    provenance_value = str(provenance or "")
+    if provenance_value == "reused_local":
+        return "badge reused", "Reused hero"
+    if provenance_value == "generated_openai":
+        return "badge generated", "Generated hero"
+    if provenance_value == "generated_placeholder":
+        return "badge placeholder", "Placeholder hero"
+    return "badge unknown", "Unknown hero"
+
+
+def _asset_provenance_label(provenance: object) -> str:
+    _, label = _asset_provenance_badge(provenance)
+    return label
+
+
+def _logo_status_label(compliance: dict) -> str | None:
+    logo = compliance.get("logo") if isinstance(compliance, dict) else None
+    if not isinstance(logo, dict) or not logo.get("required"):
+        return None
+    if not logo.get("configured_path"):
+        return "Logo missing"
+    if not logo.get("file_exists"):
+        return "Logo missing"
+    if not logo.get("applied_to_all_outputs"):
+        return "Logo not applied"
+    return None
 
 
 def _render_creative_tile(

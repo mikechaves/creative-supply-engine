@@ -211,6 +211,82 @@ class CreativeSupplyEngineTests(unittest.TestCase):
             self.assertIn("../../assets/demo%20hero.png", gallery_html)
             self.assertIn("energy-bar/en_US/1x1/final%20image.png", gallery_html)
 
+    def test_review_gallery_surfaces_asset_warning_and_logo_statuses(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            project_root = Path(temp_dir)
+            run_log = {
+                "campaign_name": "Launch",
+                "brand": {"name": "Pulse"},
+                "warnings": [
+                    "Oat Bar/en_US: OpenAI API key not configured; used placeholder image.",
+                    "Oat Bar/en_US: Logo is required but the configured file is missing.",
+                ],
+                "localized_outputs": [
+                    {
+                        "product_name": "Sparkling Water",
+                        "locale": "en_US",
+                        "region": "United States",
+                        "campaign_message": "Bright Start.",
+                        "cta": "Shop now",
+                        "asset_provenance": "reused_local",
+                        "hero_source_path": "assets/citrus-sparkling-water/hero.png",
+                        "warnings": [],
+                        "outputs": {"1x1": "outputs/launch/water/en_US/1x1/final.png"},
+                        "compliance": {
+                            "passed": True,
+                            "logo": {
+                                "required": True,
+                                "configured_path": "assets/common/pulse-beverages-logo.png",
+                                "file_exists": True,
+                                "applied_to_all_outputs": True,
+                            },
+                        },
+                    },
+                    {
+                        "product_name": "Oat Bar",
+                        "locale": "en_US",
+                        "region": "United States",
+                        "campaign_message": "Steady Energy.",
+                        "cta": "Shop now",
+                        "asset_provenance": "generated_placeholder",
+                        "warnings": [
+                            "OpenAI API key not configured; used placeholder image.",
+                            "Logo is required but the configured file is missing.",
+                        ],
+                        "outputs": {"1x1": "outputs/launch/oat/en_US/1x1/final.png"},
+                        "compliance": {
+                            "passed": False,
+                            "logo": {
+                                "required": True,
+                                "configured_path": "assets/common/missing-logo.png",
+                                "file_exists": False,
+                                "applied_to_all_outputs": False,
+                            },
+                        },
+                    },
+                ],
+            }
+
+            gallery_path = write_review_gallery(
+                campaign_output_dir=project_root / "outputs" / "launch",
+                run_log=run_log,
+                project_root=project_root,
+            )
+
+            gallery_html = gallery_path.read_text(encoding="utf-8")
+            self.assertIn("<strong>1</strong>Reused heroes", gallery_html)
+            self.assertIn("<strong>1</strong>Placeholder heroes", gallery_html)
+            self.assertIn("<strong>2</strong>Run warnings", gallery_html)
+            self.assertIn("Reused hero", gallery_html)
+            self.assertIn("Placeholder hero", gallery_html)
+            self.assertIn("2 warning(s)", gallery_html)
+            self.assertIn("0 warning(s)", gallery_html)
+            self.assertIn("Logo missing", gallery_html)
+            self.assertIn(
+                "Placeholder hero generated for this run; no reusable hero asset was saved.",
+                gallery_html,
+            )
+
     def test_review_gallery_tolerates_null_brand_and_compliance(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             project_root = Path(temp_dir)
