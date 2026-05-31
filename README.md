@@ -42,6 +42,7 @@ If you want live generation, add your OpenAI key to `.env`:
 
 ```bash
 OPENAI_API_KEY=your_key_here
+OPENAI_MODEL=gpt-5.5
 ```
 
 ## Run
@@ -147,6 +148,7 @@ outputs/<campaign-slug>/index.html
 ## Notes
 
 - If `OPENAI_API_KEY` is not set, the pipeline still runs and uses a placeholder hero where generation is needed.
+- Live generation uses GPT-5.5 through the Responses API image generation tool by default.
 - The CLI header/styling is cosmetic only.
 - Text and logo are applied deterministically after image generation.
 

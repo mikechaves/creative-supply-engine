@@ -59,18 +59,22 @@ class OpenAIImageGenerator(ImageGenerator):
         size: tuple[int, int],
     ) -> Image.Image:
         model_name = os.getenv(
-            self.config.openai_image_model_env, self.config.openai_image_model
+            self.config.openai_model_env, self.config.openai_model
         )
         payload = json.dumps(
             {
                 "model": model_name,
-                "prompt": prompt,
-                "n": 1,
-                "size": f"{size[0]}x{size[1]}",
+                "input": prompt,
+                "tools": [
+                    {
+                        "type": "image_generation",
+                        "size": f"{size[0]}x{size[1]}",
+                    }
+                ],
             }
         ).encode("utf-8")
         request = urllib.request.Request(
-            self.config.openai_generate_url,
+            self.config.openai_responses_url,
             data=payload,
             headers={
                 "Content-Type": "application/json",
@@ -79,33 +83,14 @@ class OpenAIImageGenerator(ImageGenerator):
             method="POST",
         )
         response = self._open_json(request)
-        data = response.get("data") or []
-        if not data:
-            raise RuntimeError("OpenAI response did not include any image data.")
-
-        first_image = data[0]
-        b64_image = first_image.get("b64_json")
+        b64_image = _extract_response_image_base64(response)
         if b64_image:
             image_bytes = base64.b64decode(b64_image)
             return Image.open(io.BytesIO(image_bytes)).convert("RGBA")
 
-        image_url = first_image.get("url")
-        if image_url:
-            return self._download_image(str(image_url))
-
-        raise RuntimeError("OpenAI response did not include b64_json or an image URL.")
-
-    def _download_image(self, image_url: str) -> Image.Image:
-        request = urllib.request.Request(
-            image_url,
-            headers={"User-Agent": "creative-supply-engine/1.0"},
-            method="GET",
+        raise RuntimeError(
+            "OpenAI response did not include an image_generation_call result."
         )
-        with urllib.request.urlopen(
-            request, timeout=self.config.openai_timeout_seconds
-        ) as response:
-            image_bytes = response.read()
-        return Image.open(io.BytesIO(image_bytes)).convert("RGBA")
 
     def _open_json(self, request: urllib.request.Request) -> dict:
         try:
@@ -125,6 +110,16 @@ class OpenAIImageGenerator(ImageGenerator):
             ) from exc
         except urllib.error.URLError as exc:
             raise RuntimeError(f"Network error contacting OpenAI: {exc.reason}") from exc
+
+
+def _extract_response_image_base64(response: dict) -> str | None:
+    for output in response.get("output") or []:
+        if not isinstance(output, dict) or output.get("type") != "image_generation_call":
+            continue
+        result = output.get("result")
+        if isinstance(result, str) and result.strip():
+            return result
+    return None
 
 
 def create_placeholder_image(size: tuple[int, int], label: str) -> Image.Image:

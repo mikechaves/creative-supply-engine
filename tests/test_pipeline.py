@@ -53,10 +53,6 @@ class StubOpenAIImageGenerator(OpenAIImageGenerator):
             raise AssertionError("No stub response available for request.")
         return self.responses.pop(0)
 
-    def _download_image(self, image_url: str) -> Image.Image:  # type: ignore[override]
-        self.requests.append(image_url)
-        return Image.new("RGBA", (1024, 1024), "#4b7f52")
-
 
 class CreativeSupplyEngineTests(unittest.TestCase):
     def test_load_brief_parses_brand_and_markets(self) -> None:
@@ -523,7 +519,19 @@ class CreativeSupplyEngineTests(unittest.TestCase):
         Image.new("RGBA", (1024, 1024), "#4b7f52").save(buffer, format="PNG")
         encoded_image = base64.b64encode(buffer.getvalue()).decode("utf-8")
         generator = StubOpenAIImageGenerator(
-            responses=[{"created": 1234567890, "data": [{"b64_json": encoded_image}]}]
+            responses=[
+                {
+                    "id": "resp_123",
+                    "output": [
+                        {
+                            "id": "ig_123",
+                            "type": "image_generation_call",
+                            "status": "completed",
+                            "result": encoded_image,
+                        }
+                    ],
+                }
+            ]
         )
 
         with patch.dict("os.environ", {"OPENAI_API_KEY": "test-key"}, clear=True):
@@ -531,42 +539,58 @@ class CreativeSupplyEngineTests(unittest.TestCase):
 
         self.assertEqual(result.provenance, "generated_openai")
         self.assertEqual(result.image.size, (1024, 1024))
-        self.assertEqual(generator.requests, ["https://api.openai.com/v1/images/generations"])
-
-    def test_openai_generator_downloads_url_image_response(self) -> None:
-        generator = StubOpenAIImageGenerator(
-            responses=[{"created": 1234567890, "data": [{"url": "https://example.com/generated-hero.png"}]}]
-        )
-
-        with patch.dict("os.environ", {"OPENAI_API_KEY": "test-key"}, clear=True):
-            result = generator.generate("A polished product hero shot", (1024, 1024))
-
-        self.assertEqual(result.provenance, "generated_openai")
-        self.assertEqual(result.image.size, (1024, 1024))
+        self.assertEqual(generator.requests, ["https://api.openai.com/v1/responses"])
+        self.assertEqual(generator.payloads[0]["model"], "gpt-5.5")
+        self.assertEqual(generator.payloads[0]["input"], "A polished product hero shot")
         self.assertEqual(
-            generator.requests,
+            generator.payloads[0]["tools"],
             [
-                "https://api.openai.com/v1/images/generations",
-                "https://example.com/generated-hero.png",
+                {
+                    "type": "image_generation",
+                    "size": "1024x1024",
+                }
             ],
         )
 
+    def test_openai_generator_returns_placeholder_when_response_lacks_image(self) -> None:
+        generator = StubOpenAIImageGenerator(responses=[{"id": "resp_123", "output": []}])
+
+        with patch.dict("os.environ", {"OPENAI_API_KEY": "test-key"}, clear=True):
+            result = generator.generate("A polished product hero shot", (1024, 1024))
+
+        self.assertEqual(result.provenance, "generated_placeholder")
+        self.assertEqual(result.image.size, (1024, 1024))
+        self.assertIn("did not include an image_generation_call result", result.warning or "")
+
     def test_openai_generator_honors_model_env_override(self) -> None:
+        buffer = io.BytesIO()
+        Image.new("RGBA", (1024, 1024), "#4b7f52").save(buffer, format="PNG")
+        encoded_image = base64.b64encode(buffer.getvalue()).decode("utf-8")
         generator = StubOpenAIImageGenerator(
-            responses=[{"created": 1234567890, "data": [{"url": "https://example.com/generated-hero.png"}]}]
+            responses=[
+                {
+                    "id": "resp_123",
+                    "output": [
+                        {
+                            "type": "image_generation_call",
+                            "result": encoded_image,
+                        }
+                    ],
+                }
+            ]
         )
 
         with patch.dict(
             "os.environ",
             {
                 "OPENAI_API_KEY": "test-key",
-                "OPENAI_IMAGE_MODEL": "gpt-image-1-mini",
+                "OPENAI_MODEL": "gpt-5.5-2026-04-23",
             },
             clear=True,
         ):
             generator.generate("A polished product hero shot", (1024, 1024))
 
-        self.assertEqual(generator.payloads[0]["model"], "gpt-image-1-mini")
+        self.assertEqual(generator.payloads[0]["model"], "gpt-5.5-2026-04-23")
 
     def test_main_reports_malformed_yaml_as_brief_validation_error(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
