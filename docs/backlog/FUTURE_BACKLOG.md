@@ -38,7 +38,6 @@ If another doc records a follow-up, finding, or proposed roadmap item, it must a
 ## Review And Collaboration
 
 - [ ] Add side-by-side comparison views in the static review gallery.
-- [ ] Add gallery filters for product, locale, ratio, provenance, and warning state.
 - [ ] Add reviewer notes or approval metadata without requiring a hosted service.
 - [ ] Add exportable creative QA report in Markdown or PDF.
 - [ ] Add thumbnail contact sheet generation for quick stakeholder review.
@@ -49,7 +48,6 @@ If another doc records a follow-up, finding, or proposed roadmap item, it must a
 
 - [ ] Publish the CLI as an installable internal package once setup smoke tests are stable.
 - [ ] Add release notes and versioning guidance for CLI releases.
-- [ ] Add a `pulse-cse doctor` command for environment and asset checks.
 - [ ] Add a cleanup command for ignored outputs and generated placeholder assets.
 - [ ] Add sample data reset command for demo rehearsals.
 - [ ] Add Homebrew or `pipx` install guidance if the tool graduates beyond repo-local usage.
@@ -58,7 +56,6 @@ If another doc records a follow-up, finding, or proposed roadmap item, it must a
 
 - [ ] Expand prohibited-word checks beyond campaign headline text.
 - [ ] Add logo placement collision checks against overlay panels.
-- [ ] Add safe-area validation for each supported ratio.
 - [ ] Add configurable brand compliance rules per campaign.
 - [ ] Add evidence fields for legal review and marketing approval status.
 - [ ] Add accessibility-oriented contrast checks for text overlays.

@@ -24,8 +24,10 @@ Rules:
 - Creative Supply Engine is a local proof of concept for reuse-first campaign creative generation.
 - The current CLI can load a YAML campaign brief, reuse or generate product hero assets, produce
   localized ratio variants, write a run log, and generate a browser-friendly review gallery.
-- The strongest near-term work is demo reliability: setup clarity, deterministic validation,
-  output inspection, and asset/provenance hygiene.
+- Setup, smoke validation, packaging, CI, and the CLI/static-gallery product direction are now in
+  place.
+- The strongest near-term work is local operator usefulness and trust: faster output inspection,
+  environment/asset diagnostics, and explainable brand-safety validation.
 - Large platform features such as approval workflows, hosted dashboards, and multi-brand campaign
   operations remain deferred until the local CLI demo is repeatable and easy to evaluate.
 
@@ -38,8 +40,11 @@ Rules:
 
 ## Active Workboard
 
-No active rows are queued after the CI closeout. Promote from [Future Backlog](./FUTURE_BACKLOG.md)
-only when the next item has a clear validation path and reason to beat the current parking lot.
+| Priority | Area                | Item                                                                      | Status | Validation / Exit Criteria                                                                                                                                       |
+| -------- | ------------------- | ------------------------------------------------------------------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| P1       | Review Gallery      | Add gallery filters for product, locale, ratio, provenance, and warnings. | TODO   | `pulse-cse-smoke` generates a static gallery with filter controls; tests cover filter metadata and HTML escaping for filtered values.                             |
+| P1       | Diagnostics         | Add a `pulse-cse doctor` command for environment and asset checks.         | TODO   | Console script reports Python/package status, project root, sample brief/logo/asset state, and OpenAI key presence without exposing secrets; unit tests cover OK and missing-asset paths. |
+| P1       | Brand Safety        | Add safe-area validation for supported output ratios.                      | TODO   | Unit tests exercise pass/fail safe-area cases; generated `run_log.json` and the review gallery surface safe-area warnings per ratio without blocking placeholder runs. |
 
 ## Deferred
 
