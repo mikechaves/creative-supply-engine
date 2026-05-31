@@ -169,6 +169,11 @@ not include `.env`, caches, reusable source assets, or generated local hero asse
 
 ## Validation
 
+CI runs install, tests, and the placeholder smoke demo on every push and pull request across
+Python 3.10 through 3.13. To run the same checks locally:
+
 ```bash
+python -m pip install -e .
 python -m unittest discover -s tests -v
+pulse-cse-smoke
 ```

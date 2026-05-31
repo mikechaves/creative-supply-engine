@@ -38,9 +38,8 @@ Rules:
 
 ## Active Workboard
 
-| Priority | Area              | Item                                                                 | Status | Validation / Exit Criteria                                                                                                                                      |
-| -------- | ----------------- | -------------------------------------------------------------------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| P2       | CI                | Add lightweight CI for install, tests, and sample placeholder run.    | TODO   | GitHub Actions or equivalent validates Python version support, editable install, unit tests, and a no-key sample run on every push. |
+No active rows are queued after the CI closeout. Promote from [Future Backlog](./FUTURE_BACKLOG.md)
+only when the next item has a clear validation path and reason to beat the current parking lot.
 
 ## Deferred
 
@@ -57,6 +56,7 @@ See [Future Backlog](./FUTURE_BACKLOG.md) for the full parking lot.
 
 ## Evidence
 
+- [Completed CI Backlog](./archive/COMPLETED_CI_BACKLOG_2026-05.md)
 - [Completed Product Direction Backlog](./archive/COMPLETED_PRODUCT_DIRECTION_BACKLOG_2026-05.md)
 - [CLI Plus Static Review Gallery Decision](../decisions/CLI_VS_LOCAL_WEB_REVIEW_UI_2026-05.md)
 - [Completed Output Packaging Backlog](./archive/COMPLETED_OUTPUT_PACKAGING_BACKLOG_2026-05.md)
