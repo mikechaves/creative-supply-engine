@@ -2,7 +2,7 @@
 
 > Deferred and long-range backlog programs that are not in the active execution queue.
 
-_Current as of: 2026-05-24_
+_Current as of: 2026-05-31_
 
 ---
 
@@ -42,7 +42,8 @@ If another doc records a follow-up, finding, or proposed roadmap item, it must a
 - [ ] Add reviewer notes or approval metadata without requiring a hosted service.
 - [ ] Add exportable creative QA report in Markdown or PDF.
 - [ ] Add thumbnail contact sheet generation for quick stakeholder review.
-- [ ] Evaluate a local web UI only after static gallery usage exposes real workflow limits.
+- [ ] Reconsider a local web UI only after static gallery usage exposes real workflow limits,
+      per the [CLI plus static gallery decision](../decisions/CLI_VS_LOCAL_WEB_REVIEW_UI_2026-05.md).
 
 ## Packaging And Distribution
 

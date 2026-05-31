@@ -41,7 +41,6 @@ Rules:
 | Priority | Area              | Item                                                                 | Status | Validation / Exit Criteria                                                                                                                                      |
 | -------- | ----------------- | -------------------------------------------------------------------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | P2       | CI                | Add lightweight CI for install, tests, and sample placeholder run.    | TODO   | GitHub Actions or equivalent validates Python version support, editable install, unit tests, and a no-key sample run on every push. |
-| P2       | Product Direction | Decide whether CSE stays CLI-only or gains a local web review UI.     | RESEARCH | Decision note compares CLI plus static gallery against a small local web app, including demo value, implementation cost, and maintenance risk. |
 
 ## Deferred
 
@@ -58,6 +57,8 @@ See [Future Backlog](./FUTURE_BACKLOG.md) for the full parking lot.
 
 ## Evidence
 
+- [Completed Product Direction Backlog](./archive/COMPLETED_PRODUCT_DIRECTION_BACKLOG_2026-05.md)
+- [CLI Plus Static Review Gallery Decision](../decisions/CLI_VS_LOCAL_WEB_REVIEW_UI_2026-05.md)
 - [Completed Output Packaging Backlog](./archive/COMPLETED_OUTPUT_PACKAGING_BACKLOG_2026-05.md)
 - [Completed Brief Authoring Backlog](./archive/COMPLETED_BRIEF_AUTHORING_BACKLOG_2026-05.md)
 - [Completed Review Gallery Backlog](./archive/COMPLETED_REVIEW_GALLERY_BACKLOG_2026-05.md)
